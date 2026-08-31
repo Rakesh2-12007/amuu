@@ -119,6 +119,11 @@ const romanticConfig = {
         url: "images/photo4.jpg",
         title: "Point Connection Spark",
         caption: "Boop! Connecting our worlds together. ⚡"
+      },
+      {
+        url: "images/photo5.jpg",
+        title: "Peace & Playfulness",
+        caption: "Googly eyes and victory signs. Matching our chaotic energy! ✌️👀"
       }
     ],
 

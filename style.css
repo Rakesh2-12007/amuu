@@ -1,0 +1,436 @@
+/* =================================================================
+   💖 ROMANTIC WEBSITE CUSTOM STYLING 💖
+   ================================================================= */
+
+/* Define custom styling variables */
+:root {
+  --color-pink-soft: #fbcfe8;
+  --color-pink-deep: #db2777;
+  --color-lavender: #f3e8ff;
+  --color-purple-deep: #2e1065;
+  --color-cream: #fffdfa;
+  
+  --font-fancy: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Quicksand', system-ui, -apple-system, sans-serif;
+}
+
+/* Base Styles & Custom Scrollbar */
+body {
+  font-family: var(--font-sans);
+  background-color: var(--color-cream);
+  color: var(--color-purple-deep);
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: #f472b6 #fdf2f8;
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #fdf2f8;
+}
+::-webkit-scrollbar-thumb {
+  background-color: #f472b6;
+  border-radius: 4px;
+  border: 2px solid #fdf2f8;
+}
+
+/* Glassmorphism Styles */
+.glass-card {
+  background: rgba(255, 255, 255, 0.45);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 10px 32px 0 rgba(142, 68, 173, 0.08);
+  border-radius: 20px;
+}
+
+.glass-nav {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 8px 32px 0 rgba(142, 68, 173, 0.12);
+}
+
+.dark-glass-card {
+  background: rgba(15, 5, 29, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  box-shadow: 0 10px 32px 0 rgba(0, 0, 0, 0.4);
+  border-radius: 20px;
+}
+
+/* Font helpers */
+.font-fancy {
+  font-family: var(--font-fancy);
+}
+
+/* 💌 Interactive Envelope Styles */
+.envelope-container {
+  perspective: 1000px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  max-width: 450px;
+  height: 320px;
+  margin: 2rem auto;
+  cursor: pointer;
+}
+
+.envelope-wrapper {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(253, 242, 248, 0.4);
+  border-radius: 12px;
+  transform-style: preserve-3d;
+  transition: transform 0.5s ease;
+}
+
+.envelope-wrapper.open {
+  transform: translateY(30px);
+}
+
+.envelope {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: #f472b6; /* Pink base */
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 15px 35px rgba(219, 39, 119, 0.15);
+  z-index: 10;
+}
+
+/* Left, Right and Bottom folds of envelope */
+.envelope::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 160px 225px 160px 0;
+  border-color: transparent #fbcfe8 transparent transparent;
+  z-index: 12;
+  border-radius: 0 0 12px 0;
+  pointer-events: none;
+}
+
+.envelope::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 160px 0 160px 225px;
+  border-color: transparent transparent transparent #fbcfe8;
+  z-index: 12;
+  border-radius: 0 0 0 12px;
+  pointer-events: none;
+}
+
+.envelope-bottom {
+  position: absolute;
+  bottom: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 225px 165px 225px;
+  border-color: transparent transparent #f9a8d4 transparent;
+  z-index: 13;
+  border-radius: 0 0 12px 12px;
+  pointer-events: none;
+}
+
+.envelope-flap {
+  position: absolute;
+  top: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 150px 225px 0 225px;
+  border-color: #db2777 transparent transparent transparent;
+  z-index: 15;
+  transform-origin: top;
+  transition: transform 0.4s ease 0.2s, z-index 0.05s ease 0.3s;
+}
+
+.envelope-wrapper.open .envelope-flap {
+  transform: rotateX(180deg);
+  z-index: 5;
+  transition: transform 0.4s ease, z-index 0.05s ease 0.15s;
+}
+
+.letter {
+  position: absolute;
+  bottom: 10px;
+  left: 5%;
+  width: 90%;
+  height: 85%;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+  z-index: 8;
+  transition: transform 0.5s ease 0.4s, z-index 0.05s ease 0.4s;
+  overflow: hidden;
+}
+
+.envelope-wrapper.open .letter {
+  transform: translateY(-130px) scale(1.05);
+  z-index: 14;
+  box-shadow: 0 15px 30px rgba(0, 0, 0, 0.1);
+}
+
+.envelope-wrapper.open .letter.expanded {
+  transform: translateY(0px) scale(1);
+  position: fixed;
+  top: 10%;
+  left: 5%;
+  width: 90%;
+  height: 75%;
+  max-width: 600px;
+  margin: 0 auto;
+  z-index: 999;
+  overflow-y: auto;
+  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* 🧠 Memory Game Flip Cards */
+.memory-grid {
+  perspective: 1000px;
+}
+
+.memory-card {
+  position: relative;
+  aspect-ratio: 1;
+  cursor: pointer;
+  transform-style: preserve-3d;
+  transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.memory-card.flipped {
+  transform: rotateY(180deg);
+}
+
+.card-front, .card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.card-front {
+  background: linear-gradient(135deg, #fbcfe8, #c084fc);
+  border: 2px solid rgba(255, 255, 255, 0.4);
+}
+
+.card-back {
+  background: #ffffff;
+  transform: rotateY(180deg);
+  border: 2px solid #fbcfe8;
+  font-size: 2rem;
+}
+
+/* 🧩 Love Puzzle sliding tiles */
+.puzzle-tile {
+  transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* 🔐 Secret Room Hacker Terminal Scanlines */
+.terminal-glow {
+  text-shadow: 0 0 5px rgba(34, 197, 94, 0.8), 0 0 10px rgba(34, 197, 94, 0.5);
+}
+
+.scanlines {
+  position: relative;
+  overflow: hidden;
+}
+
+.scanlines::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    rgba(18, 16, 16, 0) 50%, 
+    rgba(0, 0, 0, 0.25) 50%
+  ), linear-gradient(
+    90deg,
+    rgba(255, 0, 0, 0.06),
+    rgba(0, 255, 0, 0.02),
+    rgba(0, 0, 255, 0.06)
+  );
+  background-size: 100% 4px, 6px 100%;
+  z-index: 30;
+  pointer-events: none;
+}
+
+@keyframes cursor-blink {
+  0%, 49% { opacity: 1; }
+  50%, 100% { opacity: 0; }
+}
+
+.terminal-cursor::after {
+  content: "█";
+  margin-left: 3px;
+  animation: cursor-blink 1s infinite;
+}
+
+/* 🌙 Midnight Corner Twinkling Stars */
+.starfield {
+  background: radial-gradient(circle at bottom, #110022 0%, #030008 100%);
+  position: relative;
+  overflow: hidden;
+}
+
+.star {
+  position: absolute;
+  width: 2px;
+  height: 2px;
+  background: white;
+  border-radius: 50%;
+  animation: twinkle var(--twinkle-dur, 3s) infinite ease-in-out;
+  opacity: 0.2;
+}
+
+@keyframes twinkle {
+  0%, 100% { opacity: 0.2; transform: scale(1); }
+  50% { opacity: 1; transform: scale(1.5); }
+}
+
+/* 🌙 Midnight Flip Notes */
+.midnight-note-card {
+  perspective: 1000px;
+  cursor: pointer;
+}
+
+.midnight-note-inner {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  transform-style: preserve-3d;
+  transition: transform 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.midnight-note-card.opened .midnight-note-inner {
+  transform: rotateY(180deg);
+}
+
+.midnight-note-front, .midnight-note-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  backface-visibility: hidden;
+  border-radius: 16px;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.midnight-note-front {
+  background: linear-gradient(135deg, rgba(88, 28, 135, 0.4), rgba(49, 46, 129, 0.4));
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  color: #f5f3ff;
+}
+
+.midnight-note-back {
+  background: rgba(15, 5, 29, 0.95);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  color: #ddd6fe;
+  transform: rotateY(180deg);
+  overflow-y: auto;
+}
+
+/* Custom photo frames in secret room */
+.romantic-photo-frame {
+  position: relative;
+  background: #ffffff;
+  padding: 12px;
+  padding-bottom: 35px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+  transform: rotate(var(--rotation, 0deg));
+  transition: transform 0.3s ease;
+  border-radius: 2px;
+}
+.romantic-photo-frame:hover {
+  transform: scale(1.05) rotate(0deg);
+  z-index: 10;
+}
+
+/* 💖 Surprise screen overlay and buttons */
+.surprise-stage-shake {
+  animation: shake 0.5s ease-in-out infinite;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translate(0, 0) rotate(0); }
+  20% { transform: translate(-8px, 5px) rotate(-2deg); }
+  40% { transform: translate(6px, -6px) rotate(3deg); }
+  60% { transform: translate(-5px, 4px) rotate(-1deg); }
+  80% { transform: translate(7px, -4px) rotate(2deg); }
+}
+
+.confetti-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 9999;
+}
+
+/* Custom Keyframe Animations */
+@keyframes heartPulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.pulse-heart {
+  animation: heartPulse 1.8s infinite ease-in-out;
+}
+
+/* Floating elements logic */
+@keyframes float {
+  0% { transform: translateY(0px) rotate(0deg); opacity: 0; }
+  10% { opacity: 0.8; }
+  90% { opacity: 0.8; }
+  100% { transform: translateY(-100vh) rotate(360deg); opacity: 0; }
+}
+
+/* Navigation active indicator line animation */
+.nav-indicator {
+  transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+/* Prefers Reduced Motion settings */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-delay: 0s !important;
+    animation-duration: 0s !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0s !important;
+    scroll-behavior: auto !important;
+  }
+  .star, .pulse-heart, .envelope-wrapper, .letter, .envelope-flap {
+    animation: none !important;
+    transition: none !important;
+  }
+}

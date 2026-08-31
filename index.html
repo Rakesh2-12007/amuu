@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>A Little World For You 💗</title>
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Quicksand:wght@300..700&display=swap" rel="stylesheet">
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Tailwind config for custom values -->
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            romantic: {
+              pink: '#fbcfe8',
+              deep: '#db2777',
+              lavender: '#f3e8ff',
+              purple: '#2e1065',
+              cream: '#fffdfa'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <!-- Custom CSS -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-[#fffdfa] text-purple-950 font-sans min-h-screen relative overflow-x-hidden pb-24 md:pb-28">
+
+  <!-- Background Particle Canvas (Always Active) -->
+  <canvas id="particles-canvas" class="fixed inset-0 w-full h-full pointer-events-none z-0"></canvas>
+  
+  <!-- Overlay Confetti Canvas (For Game Wins & Celebrations) -->
+  <canvas id="confetti-canvas" class="confetti-canvas"></canvas>
+
+  <!-- 🎵 Floating Audio Control -->
+  <button id="audio-toggle" class="fixed top-4 right-4 z-50 glass-card p-3 rounded-full shadow-lg border border-pink-200/50 flex items-center justify-center active:scale-95 transition-transform opacity-50 duration-200" aria-label="Toggle Background Music">
+    <span class="text-xl">🔇</span>
+  </button>
+
+  <!-- =================================================================
+     👋 LANDING / INTRO SCREEN
+     ================================================================= -->
+  <section id="section-landing" class="fixed inset-0 w-full h-full flex flex-col justify-center items-center text-center px-4 bg-gradient-to-tr from-pink-100 via-purple-50 to-indigo-100 z-40 transition-all duration-700 ease-in-out">
+    <div class="glass-card max-w-md w-full p-8 md:p-12 shadow-2xl border border-white/60 flex flex-col items-center">
+      <div class="text-5xl md:text-6xl mb-6 pulse-heart">💗</div>
+      <h1 class="text-4xl md:text-5xl font-fancy font-bold text-pink-600 mb-4 animate-pulse">Hey You... 💗</h1>
+      <p class="text-gray-600 font-medium text-sm md:text-base mb-8">I made a little something for someone special.</p>
+      <button id="enter-world-btn" class="px-8 py-3.5 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white rounded-full font-bold shadow-lg transition duration-200 transform hover:scale-105 active:scale-95 flex items-center justify-center space-x-2 text-sm md:text-base cursor-pointer">
+        <span>Enter My Little World</span>
+        <span>✨</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- =================================================================
+     🖥️ MAIN APPLICATION INTERFACE
+     ================================================================= -->
+  <main id="main-app" class="hidden relative max-w-4xl mx-auto px-4 pt-12 pb-16 z-10 opacity-0 transition-opacity duration-500">
+    
+    <!-- App Header -->
+    <header class="text-center mb-8 flex flex-col items-center">
+      <div id="app-logo" class="inline-block text-3xl md:text-4xl cursor-pointer hover:scale-110 active:scale-95 transition-transform duration-200" title="Click for a sparkle!">✨💖✨</div>
+      <h2 class="text-xs uppercase tracking-widest text-pink-500 font-bold mt-1 font-fancy">Amuu's Digital World</h2>
+    </header>
+
+    <!-- 💌 A Little Message Page -->
+    <section id="section-message" class="transition-all duration-300 opacity-0 scale-95">
+      <div class="text-center max-w-lg mx-auto">
+        <h3 class="text-2xl md:text-3xl font-fancy font-bold text-purple-950 mb-2">A Little Message 💌</h3>
+        <p class="text-xs text-gray-500 mb-6">Open the letter below for a small note...</p>
+
+        <!-- Envelope structure -->
+        <div class="envelope-container" id="envelope-click-area">
+          <div class="envelope-wrapper" id="envelope-wrapper">
+            <div class="envelope-flap"></div>
+            <div class="envelope-bottom"></div>
+            <div class="envelope"></div>
+            <!-- Letter Card inside envelope -->
+            <div class="letter text-left flex flex-col justify-between" id="envelope-letter">
+              <button id="close-letter-btn" class="absolute top-2 right-2 text-gray-400 hover:text-pink-500 text-lg p-1.5 focus:outline-none" aria-label="Close Letter">✕</button>
+              <div class="overflow-y-auto pr-1 h-full flex flex-col">
+                <div class="font-fancy text-sm font-bold text-pink-600 mb-2 border-b pb-1.5 border-pink-100">From Me, To You 🌸</div>
+                <div id="typed-message-content" class="text-xs md:text-sm text-gray-700 leading-relaxed font-sans flex-1">
+                  <!-- JS Typewriter injects here -->
+                  <span class="text-gray-400 italic">Click the card to read the message...</span>
+                </div>
+              </div>
+              <div class="text-right mt-4">
+                <button id="read-again-btn" class="hidden text-xs text-pink-500 hover:text-pink-600 font-bold focus:outline-none">
+                  Read Again ❤️
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p class="text-xs text-gray-400 italic animate-bounce mt-4" id="envelope-instruction">
+          Click the letter above to open ✉️
+        </p>
+      </div>
+    </section>
+
+    <!-- 🎮 Let's Play (Arcade Menu) Page -->
+    <section id="section-games" class="hidden transition-all duration-300 opacity-0 scale-95">
+      <div class="text-center max-w-2xl mx-auto">
+        <h3 class="text-2xl md:text-3xl font-fancy font-bold text-purple-950 mb-2">Let's Play 🎮</h3>
+        <p class="text-xs text-gray-500 mb-8">Solve these cute mini-challenges I coded for you!</p>
+
+        <!-- Final Win Message Badge -->
+        <div id="overall-games-win" class="hidden max-w-md mx-auto glass-card p-6 border border-pink-300 shadow-lg text-center mb-8 transform scale-105 transition-all">
+          <span class="text-4xl">🏆👑</span>
+          <h4 class="text-xl font-bold text-pink-600 mt-2 mb-1">Arcade Cleared!</h4>
+          <p class="text-sm text-gray-700 font-medium"></p>
+        </div>
+
+        <!-- Arcade Selection Grid -->
+        <div id="arcade-container" class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          
+          <!-- Game 1: Catch Hearts -->
+          <div data-game-id="game1" class="glass-card p-6 text-left border border-white/60 hover:border-pink-300 hover:shadow-lg transition cursor-pointer flex flex-col justify-between h-48 transform hover:-translate-y-1 duration-200">
+            <div>
+              <div class="flex justify-between items-start">
+                <span class="text-3xl">❤️</span>
+                <span id="win-badge-game1" class="hidden text-xs px-2.5 py-1 bg-pink-100 text-pink-600 font-bold rounded-full">Cleared ✅</span>
+              </div>
+              <h4 class="font-bold text-base text-purple-950 mt-4">Catch the Hearts</h4>
+              <p class="text-xs text-gray-500 mt-1 leading-relaxed">Hearts fall from the sky. Tap them fast before they disappear. Keep up with the speed!</p>
+            </div>
+            <div class="text-right text-xs font-bold text-pink-500 uppercase tracking-wider">Play Now →</div>
+          </div>
+
+          <!-- Game 2: Heart Memory -->
+          <div data-game-id="game2" class="glass-card p-6 text-left border border-white/60 hover:border-pink-300 hover:shadow-lg transition cursor-pointer flex flex-col justify-between h-48 transform hover:-translate-y-1 duration-200">
+            <div>
+              <div class="flex justify-between items-start">
+                <span class="text-3xl">🧠</span>
+                <span id="win-badge-game2" class="hidden text-xs px-2.5 py-1 bg-pink-100 text-pink-600 font-bold rounded-full">Cleared ✅</span>
+              </div>
+              <h4 class="font-bold text-base text-purple-950 mt-4">Heart Memory</h4>
+              <p class="text-xs text-gray-500 mt-1 leading-relaxed">Match the matching pairs of cute symbols behind the glass cards. Test your concentration!</p>
+            </div>
+            <div class="text-right text-xs font-bold text-pink-500 uppercase tracking-wider">Play Now →</div>
+          </div>
+
+          <!-- Game 3: Escape Heart -->
+          <div data-game-id="game3" class="glass-card p-6 text-left border border-white/60 hover:border-pink-300 hover:shadow-lg transition cursor-pointer flex flex-col justify-between h-48 transform hover:-translate-y-1 duration-200">
+            <div>
+              <div class="flex justify-between items-start">
+                <span class="text-3xl">💗</span>
+                <span id="win-badge-game3" class="hidden text-xs px-2.5 py-1 bg-pink-100 text-pink-600 font-bold rounded-full">Cleared ✅</span>
+              </div>
+              <h4 class="font-bold text-base text-purple-950 mt-4">Don't Let the Heart Escape</h4>
+              <p class="text-xs text-gray-500 mt-1 leading-relaxed">Try to click the slippery heart. It dodges and speeds up with every click. Catch it if you can!</p>
+            </div>
+            <div class="text-right text-xs font-bold text-pink-500 uppercase tracking-wider">Play Now →</div>
+          </div>
+
+          <!-- Game 4: Love Puzzle -->
+          <div data-game-id="game4" class="glass-card p-6 text-left border border-white/60 hover:border-pink-300 hover:shadow-lg transition cursor-pointer flex flex-col justify-between h-48 transform hover:-translate-y-1 duration-200">
+            <div>
+              <div class="flex justify-between items-start">
+                <span class="text-3xl">🧩</span>
+                <span id="win-badge-game4" class="hidden text-xs px-2.5 py-1 bg-pink-100 text-pink-600 font-bold rounded-full">Cleared ✅</span>
+              </div>
+              <h4 class="font-bold text-base text-purple-950 mt-4">Love Puzzle</h4>
+              <p class="text-xs text-gray-500 mt-1 leading-relaxed">Slide the blocks back into order to reveal a secret sweet message just for you.</p>
+            </div>
+            <div class="text-right text-xs font-bold text-pink-500 uppercase tracking-wider">Play Now →</div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- 🔐 Secret Room Page -->
+    <section id="section-secret" class="hidden transition-all duration-300 opacity-0 scale-95">
+      <div class="text-center max-w-lg mx-auto">
+        <h3 class="text-2xl md:text-3xl font-fancy font-bold text-purple-950 mb-2">Secret Room 🔐</h3>
+        <p class="text-xs text-gray-500 mb-8">Unlock the classified archives of our friendship.</p>
+
+        <!-- Screen 1: Lock passcode input -->
+        <div id="lock-prompt-screen" class="glass-card p-8 border border-white/60 max-w-sm mx-auto shadow-xl">
+          <p class="text-xs font-semibold text-purple-900 mb-6 flex items-center justify-center space-x-1">
+            <span>Some things are meant to stay between us...</span>
+            <span>🔐</span>
+          </p>
+          
+          <div id="passcode-container" class="relative w-44 mx-auto mb-6 border border-pink-200 rounded-lg overflow-hidden bg-white/70">
+            <input type="password" id="pin-input" readonly placeholder="••••" class="w-full py-3 px-4 text-center tracking-widest font-mono text-2xl font-bold bg-transparent text-pink-600 focus:outline-none">
+          </div>
+
+          <!-- Glass Keypad -->
+          <div class="grid grid-cols-3 gap-2.5 max-w-[220px] mx-auto mb-6">
+            <button data-keypad-val="1" class="w-full py-2.5 text-sm font-semibold rounded-lg bg-pink-50/50 hover:bg-pink-100 border border-pink-100 active:scale-95 transition-transform focus:outline-none">1</button>
+            <button data-keypad-val="2" class="w-full py-2.5 text-sm font-semibold rounded-lg bg-pink-50/50 hover:bg-pink-100 border border-pink-100 active:scale-95 transition-transform focus:outline-none">2</button>
+            <button data-keypad-val="3" class="w-full py-2.5 text-sm font-semibold rounded-lg bg-pink-50/50 hover:bg-pink-100 border border-pink-100 active:scale-95 transition-transform focus:outline-none">3</button>
+            <button data-keypad-val="4" class="w-full py-2.5 text-sm font-semibold rounded-lg bg-pink-50/50 hover:bg-pink-100 border border-pink-100 active:scale-95 transition-transform focus:outline-none">4</button>
+            <button data-keypad-val="5" class="w-full py-2.5 text-sm font-semibold rounded-lg bg-pink-50/50 hover:bg-pink-100 border border-pink-100 active:scale-95 transition-transform focus:outline-none">5</button>
+            <button data-keypad-val="6" class="w-full py-2.5 text-sm font-semibold rounded-lg bg-pink-50/50 hover:bg-pink-100 border border-pink-100 active:scale-95 transition-transform focus:outline-none">6</button>
+            <button data-keypad-val="7" class="w-full py-2.5 text-sm font-semibold rounded-lg bg-pink-50/50 hover:bg-pink-100 border border-pink-100 active:scale-95 transition-transform focus:outline-none">7</button>
+            <button data-keypad-val="8" class="w-full py-2.5 text-sm font-semibold rounded-lg bg-pink-50/50 hover:bg-pink-100 border border-pink-100 active:scale-95 transition-transform focus:outline-none">8</button>
+            <button data-keypad-val="9" class="w-full py-2.5 text-sm font-semibold rounded-lg bg-pink-50/50 hover:bg-pink-100 border border-pink-100 active:scale-95 transition-transform focus:outline-none">9</button>
+            <button data-keypad-val="clear" class="w-full py-2.5 text-xs font-bold rounded-lg bg-rose-50 hover:bg-rose-100 border border-rose-100 text-rose-500 active:scale-95 transition-transform focus:outline-none">Clear</button>
+            <button data-keypad-val="0" class="w-full py-2.5 text-sm font-semibold rounded-lg bg-pink-50/50 hover:bg-pink-100 border border-pink-100 active:scale-95 transition-transform focus:outline-none">0</button>
+            <button id="pin-submit" class="w-full py-2.5 text-xs font-bold rounded-lg bg-emerald-50 hover:bg-emerald-100 border border-emerald-100 text-emerald-600 active:scale-95 transition-transform focus:outline-none">Enter</button>
+          </div>
+          <p class="text-[10px] text-gray-400 italic">Hint: Try standard PIN '1207' (configurable in config.js)</p>
+        </div>
+
+        <!-- Screen 2: Terminal Loading screen -->
+        <div id="secret-terminal-screen" class="hidden max-w-md mx-auto p-6 bg-gray-950 text-left rounded-xl shadow-2xl border border-gray-800 scanlines min-h-60">
+          <div class="flex items-center space-x-1.5 border-b border-gray-800 pb-2 mb-4">
+            <span class="w-2.5 h-2.5 rounded-full bg-red-500"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-yellow-500"></span>
+            <span class="w-2.5 h-2.5 rounded-full bg-green-500"></span>
+            <span class="text-gray-500 text-[10px] font-mono pl-2">HeartOS Decryption Terminal v1.2</span>
+          </div>
+          <div id="terminal-logs">
+            <!-- JS writes hacking logs here -->
+          </div>
+        </div>
+
+        <!-- Screen 3: Unlocked secret room content -->
+        <div id="secret-content-screen" class="hidden space-y-8 animate-fade-in">
+          <div class="p-6 bg-gradient-to-tr from-purple-950 to-indigo-950 text-white rounded-2xl shadow-2xl border border-purple-800 text-left">
+            <div class="text-center pb-4 border-b border-purple-900/60">
+              <span class="text-4xl">🔐🔓</span>
+              <h4 class="text-lg font-fancy font-bold text-pink-400 mt-2">CLASSIFIED ARCHIVES ACCESSED</h4>
+              <p class="text-[10px] text-purple-400 font-mono mt-0.5">Welcome to the secret side of the website.</p>
+            </div>
+
+            <!-- Inside Jokes -->
+            <div class="mt-6">
+              <h5 class="text-xs uppercase tracking-wider text-purple-400 font-bold mb-3 font-mono">Inside Jokes Log 📝</h5>
+              <ul id="secret-jokes-list" class="space-y-2.5 max-h-56 overflow-y-auto pr-2">
+                <!-- JS injects here -->
+              </ul>
+            </div>
+            
+            <!-- Confidentials Notes -->
+            <div class="mt-8">
+              <h5 class="text-xs uppercase tracking-wider text-purple-400 font-bold mb-3 font-mono">Confidential Thoughts 📂</h5>
+              <div id="secret-notes-container" class="grid grid-cols-1 gap-4">
+                <!-- JS injects here -->
+              </div>
+            </div>
+
+            <!-- Photos Grid -->
+            <div class="mt-8 pt-6 border-t border-purple-900/60">
+              <h5 class="text-xs uppercase tracking-wider text-purple-400 font-bold mb-4 font-mono">Visual Memories Grid 📸</h5>
+              <div id="secret-photos-container" class="grid grid-cols-1 sm:grid-cols-2 gap-6 justify-center">
+                <!-- JS polaroid cards inject here -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 💬 Our Chat Page -->
+    <section id="section-chat" class="hidden transition-all duration-300 opacity-0 scale-95">
+      <div class="text-center max-w-lg mx-auto">
+        <h3 class="text-2xl md:text-3xl font-fancy font-bold text-purple-950 mb-2">Our Chat Room 💬</h3>
+        <p class="text-xs text-gray-500 mb-8">A private, real-time connection just for us two.</p>
+
+        <!-- Screen 1: Lock prompt (if passcode not entered) -->
+        <div id="chat-lock-prompt" class="glass-card p-8 border border-white/60 max-w-sm mx-auto shadow-xl">
+          <span class="text-5xl mb-4 block">🔒💬</span>
+          <h4 class="text-lg font-fancy font-bold text-purple-950 mb-2">Encrypted Connection</h4>
+          <p class="text-xs text-gray-500 mb-6 leading-relaxed">This chat room is private. Please enter the secret PIN in the Secret Room first to unlock it! 🔐</p>
+          <button onclick="document.querySelectorAll('[data-nav-target=secret]')[0].click()" class="px-6 py-2.5 bg-pink-500 hover:bg-pink-600 text-white rounded-full font-bold shadow-lg transition text-xs uppercase tracking-wider">
+            Go to Secret Room 🔑
+          </button>
+        </div>
+
+        <!-- Screen 2: Identity Selection (once PIN entered, but user not identified) -->
+        <div id="chat-identity-screen" class="hidden glass-card p-8 border border-white/60 max-w-sm mx-auto shadow-xl">
+          <span class="text-5xl mb-4 block">🌸☕</span>
+          <h4 class="text-lg font-fancy font-bold text-purple-950 mb-2">Identify Yourself</h4>
+          <p class="text-xs text-gray-500 mb-6 leading-relaxed">To start syncing messages, please select who you are. This choice will be saved on your browser.</p>
+          <div class="flex flex-col space-y-3">
+            <button id="identity-amuu-btn" class="px-6 py-3 bg-pink-100 hover:bg-pink-200 text-pink-700 rounded-xl font-bold transition flex items-center justify-center space-x-2 border border-pink-200 active:scale-95 duration-100">
+              <span>I am Amuu</span>
+              <span>🌸</span>
+            </button>
+            <button id="identity-rakesh-btn" class="px-6 py-3 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-xl font-bold transition flex items-center justify-center space-x-2 border border-purple-200 active:scale-95 duration-100">
+              <span>I am Rakesh</span>
+              <span>☕</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Screen 3: Chat Room UI (when PIN entered and user identified) -->
+        <div id="chat-room-interface" class="hidden glass-card border border-white/60 shadow-xl rounded-2xl overflow-hidden flex flex-col h-[520px] max-w-md mx-auto text-left">
+          
+          <!-- Chat Header -->
+          <div class="bg-gradient-to-r from-pink-100 via-purple-50 to-indigo-100 p-4 border-b border-pink-100 flex justify-between items-center">
+            <div class="flex items-center space-x-2">
+              <span class="text-2xl animate-pulse">💬</span>
+              <div>
+                <h4 class="text-sm font-bold text-purple-950">Amuu & Rakesh Connection</h4>
+                <p id="chat-user-label" class="text-[10px] text-pink-600 font-semibold uppercase">Chatting as: ...</p>
+              </div>
+            </div>
+            <!-- Switch user button -->
+            <button id="chat-reset-identity-btn" class="text-[10px] bg-purple-200/50 hover:bg-purple-200 text-purple-950 px-2.5 py-1 rounded-md font-bold focus:outline-none transition active:scale-95">
+              Switch User
+            </button>
+          </div>
+
+          <!-- Messages Stream -->
+          <div id="chat-messages-thread" class="flex-1 p-4 overflow-y-auto space-y-3 bg-white/40 flex flex-col">
+            <!-- Messages bubbles will load here -->
+          </div>
+
+          <!-- Chat Input Area -->
+          <div class="p-3 bg-white/70 border-t border-pink-100 flex items-center space-x-2">
+            <button id="chat-clear-history-btn" class="text-xs hover:text-rose-500 text-gray-400 p-2 font-bold focus:outline-none transition" title="Clear Local Chat History">
+              🗑️
+            </button>
+            <input type="text" id="chat-input-text" placeholder="Type a message..." class="flex-1 py-2 px-4 rounded-full border border-pink-200 text-sm focus:outline-none focus:border-pink-400 bg-white/80">
+            <button id="chat-send-btn" class="p-2.5 bg-pink-500 hover:bg-pink-600 text-white rounded-full font-bold shadow transition active:scale-95 flex items-center justify-center">
+              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- 🧩 Our Mini Quiz Page -->
+    <section id="section-quiz" class="hidden transition-all duration-300 opacity-0 scale-95">
+      <div class="text-center max-w-lg mx-auto">
+        <h3 class="text-2xl md:text-3xl font-fancy font-bold text-purple-950 mb-2">Our Mini Quiz 🧩</h3>
+        <p class="text-xs text-gray-500 mb-8">Let's see how well you actually know our friendship!</p>
+
+        <!-- Quiz Intro screen -->
+        <div id="quiz-intro-screen" class="glass-card p-8 border border-white/60 max-w-sm mx-auto shadow-xl">
+          <span class="text-5xl mb-4 block">🧠🍿</span>
+          <h4 class="text-lg font-fancy font-bold text-purple-950 mb-2">The Bond Test</h4>
+          <p class="text-xs text-gray-500 mb-6 leading-relaxed">Answer these five simple questions. Let's see if we are really on the same wavelength! 😉</p>
+          <button id="start-quiz-btn" class="px-6 py-2.5 bg-pink-500 hover:bg-pink-600 text-white rounded-full font-bold shadow-lg transition duration-200 transform hover:scale-105 active:scale-95 text-xs uppercase tracking-wider cursor-pointer">
+            Start Quiz 🚀
+          </button>
+        </div>
+
+        <!-- Quiz Play screen -->
+        <div id="quiz-play-screen" class="hidden glass-card p-6 md:p-8 border border-white/60 shadow-xl text-left">
+          <div class="flex justify-between items-center mb-4 text-xs font-bold text-gray-500">
+            <span id="quiz-count">Question 1 of 5</span>
+            <span class="px-2 py-0.5 bg-pink-100 text-pink-600 rounded">Friendship Level</span>
+          </div>
+
+          <!-- Progress bar -->
+          <div class="w-full h-1.5 bg-pink-100 rounded-full mb-6 overflow-hidden">
+            <div id="quiz-progress-fill" class="h-full bg-gradient-to-r from-pink-400 to-purple-600 rounded-full transition-all duration-300" style="width: 0%;"></div>
+          </div>
+
+          <h4 id="quiz-question-text" class="text-base md:text-lg font-fancy font-bold text-purple-950 mb-6 leading-snug">
+            <!-- Question goes here -->
+          </h4>
+
+          <div id="quiz-options-container" class="space-y-3">
+            <!-- Option buttons go here -->
+          </div>
+
+          <!-- Explanation/Feedback block -->
+          <div id="quiz-explanation-box" class="hidden mt-6 p-4 bg-purple-50 rounded-xl border border-purple-200 text-xs text-purple-950 leading-relaxed font-medium italic">
+            <div id="quiz-explanation-title" class="font-bold text-purple-900 not-italic mb-0.5">Spot On!</div>
+            <div id="quiz-explanation-text">Explanation goes here.</div>
+          </div>
+
+          <div class="text-right mt-6">
+            <button id="quiz-next-btn" class="hidden px-5 py-2 bg-purple-950 hover:bg-purple-900 text-white rounded-full text-xs font-bold shadow-md hover:shadow-lg focus:outline-none transition">
+              Next Question →
+            </button>
+          </div>
+        </div>
+
+        <!-- Quiz Result screen -->
+        <div id="quiz-result-screen" class="hidden glass-card p-8 border border-white/60 max-w-sm mx-auto shadow-xl">
+          <span class="text-5xl mb-4 block">🎓✨</span>
+          <h4 class="text-lg font-fancy font-bold text-purple-950 mb-1">Quiz Completed!</h4>
+          <p class="text-xs text-gray-400 mb-6">Here is how you scored:</p>
+          
+          <div class="w-28 h-28 rounded-full border-4 border-pink-400 flex flex-col justify-center items-center mx-auto mb-6 bg-pink-50">
+            <span id="quiz-score-value" class="text-2xl font-bold text-pink-600">5 / 5</span>
+            <span class="text-[9px] uppercase font-bold text-gray-400 tracking-wider">Score</span>
+          </div>
+
+          <p id="quiz-score-desc" class="text-sm font-semibold text-purple-900 mb-6 italic leading-relaxed">
+            <!-- Result text goes here -->
+          </p>
+
+          <button id="retry-quiz-btn" class="px-5 py-2.5 bg-purple-950 hover:bg-purple-900 text-white rounded-full text-xs font-bold shadow-md active:scale-95 transition-transform">
+            Retry Quiz 🔁
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 🌙 Midnight Corner Page -->
+    <section id="section-midnight" class="hidden transition-all duration-300 opacity-0 scale-95">
+      <div class="text-center max-w-2xl mx-auto rounded-3xl overflow-hidden shadow-2xl starfield border border-purple-900/40 relative pb-12" id="midnight-starfield">
+        
+        <!-- Starfield Atmosphere overlay -->
+        <div class="absolute inset-0 bg-gradient-to-t from-purple-950/20 to-transparent pointer-events-none z-0"></div>
+
+        <div class="relative z-10 p-6 md:p-10 flex flex-col items-center">
+          
+          <!-- Crescent Moon element (click easter egg) -->
+          <div id="midnight-moon" class="text-5xl md:text-6xl cursor-pointer select-none transition hover:scale-110 active:scale-95 filter drop-shadow-[0_0_15px_rgba(251,191,36,0.3)] mb-4" title="Click me!">🌙</div>
+          
+          <h3 class="text-2xl md:text-3xl font-fancy font-bold text-purple-200 mb-2">Things We Don't Say Out Loud 🌙</h3>
+          <p class="text-xs text-purple-300 max-w-sm mb-10 leading-relaxed">A calm, quiet space for thoughts, wishes, and reminders. Open these cards whenever you need them.</p>
+
+          <!-- Star notes container -->
+          <div id="midnight-notes-container" class="grid grid-cols-1 sm:grid-cols-2 gap-6 w-full max-w-xl">
+            <!-- JS injects flippable notes here -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 💖 Surprise Page -->
+    <section id="section-surprise" class="hidden transition-all duration-300 opacity-0 scale-95">
+      <div class="text-center max-w-lg mx-auto">
+        <h3 class="text-2xl md:text-3xl font-fancy font-bold text-purple-950 mb-2">Surprise Section 💖</h3>
+        <p class="text-xs text-gray-500 mb-10">There is a button. I suggest you ignore it.</p>
+
+        <!-- Warning Button -->
+        <div class="flex justify-center items-center min-h-[180px]">
+          <button id="surprise-btn" class="px-8 py-5 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white rounded-full font-bold shadow-2xl transition duration-150 transform hover:scale-105 active:scale-95 text-lg font-fancy cursor-pointer text-center select-none">
+            DON'T CLICK THIS BUTTON 🛑
+          </button>
+        </div>
+
+        <!-- 3, 2, 1 Countdown overlay (Hidden by default) -->
+        <div id="surprise-mask" class="hidden fixed inset-0 w-full h-full bg-black/95 z-50 flex flex-col justify-center items-center">
+          <div class="text-white text-[10rem] font-bold font-mono tracking-wider animate-ping select-none" id="surprise-countdown">3</div>
+          <p class="text-red-500 uppercase tracking-widest text-xs font-bold animate-pulse mt-4">DO NOT TURN OFF THE DEVICE</p>
+        </div>
+
+        <!-- Unlocked Surprise Screen -->
+        <div id="surprise-reveal-screen" class="hidden glass-card p-6 md:p-10 border border-white/60 shadow-2xl relative max-w-md mx-auto transition-opacity duration-700 opacity-0">
+          <span class="text-6xl mb-4 block animate-bounce">🎈🎉🍿</span>
+          <h4 id="surprise-title" class="text-2xl font-fancy font-bold text-pink-600 mb-4">
+            <!-- Surprise title -->
+          </h4>
+          <p id="surprise-text" class="text-xs md:text-sm text-gray-700 leading-relaxed font-sans font-medium whitespace-pre-line text-left bg-white/50 p-4 rounded-xl border border-pink-100">
+            <!-- Surprise body content -->
+          </p>
+          <div class="text-center mt-6">
+            <button id="close-surprise-btn" class="px-5 py-2 bg-purple-950 hover:bg-purple-900 text-white rounded-full text-xs font-bold shadow-md transition active:scale-95">
+              Reset Button 🔁
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 📖 Memory Lane Timeline Page -->
+    <section id="section-timeline" class="hidden transition-all duration-300 opacity-0 scale-95">
+      <div class="text-center max-w-2xl mx-auto">
+        <h3 class="text-2xl md:text-3xl font-fancy font-bold text-purple-950 mb-2">Memory Lane 📖</h3>
+        <p class="text-xs text-gray-500 mb-10">A simple timeline of us. Click each event to expand the memory.</p>
+
+        <!-- Timeline container -->
+        <div class="relative w-full py-4">
+          <!-- Central timeline vertical line line line -->
+          <div class="absolute left-3 md:left-1/2 top-0 bottom-0 w-1 bg-pink-100 transform md:-translate-x-1/2 z-0"></div>
+          
+          <div id="timeline-elements" class="relative z-10">
+            <!-- JS renders timeline nodes here -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================
+       💕 FINAL SCREEN (OUTRO SECTION)
+       ================================================================= -->
+    <footer class="mt-16 pt-8 border-t border-purple-100 text-center max-w-md mx-auto pb-12 flex flex-col items-center">
+      <p class="text-sm font-semibold text-purple-800/80 mb-1 italic">Maybe this website isn't perfect...</p>
+      <p class="text-base font-bold text-pink-600 mb-2 font-fancy">But I made every little part of it with you in mind. ❤️</p>
+      <p class="text-xs text-gray-400 mb-6 font-medium">Thanks for being you.</p>
+      <button id="restart-app-btn" class="px-5 py-2.5 bg-purple-100 hover:bg-pink-100 text-purple-950 hover:text-pink-600 rounded-full font-bold border border-purple-200/40 text-xs shadow-sm transition active:scale-95 flex items-center justify-center space-x-1 cursor-pointer">
+        <span>Start Again</span>
+        <span>✨</span>
+      </button>
+      <div class="mt-8 text-[9px] text-gray-300 hover:text-purple-400 transition cursor-pointer select-none font-mono" id="dev-note-trigger">
+        coded by antigravity with love &copy; 2026
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- =================================================================
+     🎮 GENERAL GAME RUNTIME OVERLAY (MODAL MODAL)
+     ================================================================= -->
+  <div id="game-overlay" class="hidden fixed inset-0 w-full h-full bg-black/55 backdrop-blur-sm z-50 justify-center items-center p-4 transition-all duration-300">
+    <div class="glass-card max-w-md w-full p-6 border border-white/60 shadow-2xl relative flex flex-col animate-scale-up">
+      <button id="close-game-btn" class="absolute top-4 right-4 text-gray-400 hover:text-pink-500 font-bold text-xl p-1.5 focus:outline-none transition" aria-label="Close Game">✕</button>
+      <h3 id="overlay-game-title" class="text-lg md:text-xl font-fancy font-bold text-purple-950 mb-4 border-b border-pink-100 pb-2">Game</h3>
+      <div id="overlay-game-body" class="w-full flex flex-col items-center overflow-y-auto max-h-[75vh]">
+        <!-- Active game template will load here -->
+      </div>
+    </div>
+  </div>
+
+  <!-- =================================================================
+     🧭 FLOATING BOTTOM NAVIGATION BAR
+     ================================================================= -->
+  <nav id="floating-nav" class="hidden fixed bottom-4 left-1/2 transform -translate-x-1/2 z-30 w-[95%] max-w-xl glass-nav rounded-2xl shadow-xl border border-white/50 px-2 py-2 flex items-center justify-between overflow-x-auto scrollbar-none opacity-0 transition-opacity duration-500">
+    <div class="flex space-x-1 w-full justify-between min-w-[580px]">
+      <button data-nav-target="message" class="flex-1 py-2 px-1.5 rounded-xl flex flex-col items-center transition focus:outline-none text-pink-600 font-bold scale-105 active:scale-95 text-center">
+        <span class="text-lg mb-0.5">💌</span>
+        <span class="text-[9px] tracking-tight uppercase">Message</span>
+      </button>
+      <button data-nav-target="games" class="flex-1 py-2 px-1.5 rounded-xl flex flex-col items-center transition focus:outline-none text-gray-500 active:scale-95 text-center">
+        <span class="text-lg mb-0.5">🎮</span>
+        <span class="text-[9px] tracking-tight uppercase">Play</span>
+      </button>
+      <button data-nav-target="secret" class="flex-1 py-2 px-1.5 rounded-xl flex flex-col items-center transition focus:outline-none text-gray-500 active:scale-95 text-center">
+        <span class="text-lg mb-0.5">🔐</span>
+        <span class="text-[9px] tracking-tight uppercase">Secret</span>
+      </button>
+      <button data-nav-target="chat" class="flex-1 py-2 px-1.5 rounded-xl flex flex-col items-center transition focus:outline-none text-gray-500 active:scale-95 text-center">
+        <span class="text-lg mb-0.5">💬</span>
+        <span class="text-[9px] tracking-tight uppercase">Chat</span>
+      </button>
+      <button data-nav-target="quiz" class="flex-1 py-2 px-1.5 rounded-xl flex flex-col items-center transition focus:outline-none text-gray-500 active:scale-95 text-center">
+        <span class="text-lg mb-0.5">🧩</span>
+        <span class="text-[9px] tracking-tight uppercase">Quiz</span>
+      </button>
+      <button data-nav-target="midnight" class="flex-1 py-2 px-1.5 rounded-xl flex flex-col items-center transition focus:outline-none text-gray-500 active:scale-95 text-center">
+        <span class="text-lg mb-0.5">🌙</span>
+        <span class="text-[9px] tracking-tight uppercase">Midnight</span>
+      </button>
+      <button data-nav-target="surprise" class="flex-1 py-2 px-1.5 rounded-xl flex flex-col items-center transition focus:outline-none text-gray-500 active:scale-95 text-center">
+        <span class="text-lg mb-0.5">💖</span>
+        <span class="text-[9px] tracking-tight uppercase">Surprise</span>
+      </button>
+      <button data-nav-target="timeline" class="flex-1 py-2 px-1.5 rounded-xl flex flex-col items-center transition focus:outline-none text-gray-500 active:scale-95 text-center">
+        <span class="text-lg mb-0.5">📖</span>
+        <span class="text-[9px] tracking-tight uppercase">Lane</span>
+      </button>
+    </div>
+  </nav>
+
+  <!-- Load script config and files -->
+  <script src="config.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

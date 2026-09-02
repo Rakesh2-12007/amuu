@@ -89,15 +89,15 @@
             <div class="envelope"></div>
             <!-- Letter Card inside envelope -->
             <div class="letter text-left flex flex-col justify-between" id="envelope-letter">
-              <button id="close-letter-btn" class="absolute top-2 right-2 text-gray-400 hover:text-pink-500 text-lg p-1.5 focus:outline-none" aria-label="Close Letter">✕</button>
-              <div class="overflow-y-auto pr-1 h-full flex flex-col">
-                <div class="font-fancy text-sm font-bold text-pink-600 mb-2 border-b pb-1.5 border-pink-100">From Me, To You 🌸</div>
-                <div id="typed-message-content" class="text-xs md:text-sm text-gray-700 leading-relaxed font-sans flex-1">
+              <button id="close-letter-btn" class="absolute top-3 right-3 text-gray-400 hover:text-pink-500 text-xl p-1.5 focus:outline-none z-20 cursor-pointer" aria-label="Close Letter">✕</button>
+              <div class="letter-content-scroll flex flex-col pr-1 h-full">
+                <div class="font-fancy text-sm md:text-base font-bold text-pink-600 mb-2 border-b pb-1.5 border-pink-100 flex-shrink-0">From Me, To You 🌸</div>
+                <div id="typed-message-content" class="text-xs md:text-sm text-gray-700 leading-relaxed font-sans flex-1 pb-4">
                   <!-- JS Typewriter injects here -->
                   <span class="text-gray-400 italic">Click the card to read the message...</span>
                 </div>
               </div>
-              <div class="text-right mt-4">
+              <div class="text-right mt-2 flex-shrink-0">
                 <button id="read-again-btn" class="hidden text-xs text-pink-500 hover:text-pink-600 font-bold focus:outline-none">
                   Read Again ❤️
                 </button>

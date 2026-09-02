@@ -375,10 +375,15 @@ document.addEventListener("DOMContentLoaded", () => {
         initGamesArcade();
       } else if (sectionId === "quiz") {
         resetQuiz();
-      } else if (sectionId === "midnight") {
-        initMidnightCorner();
       } else if (sectionId === "surprise") {
         resetSurprise();
+      }
+
+      // Always unlock body scroll when changing sections
+      document.body.style.overflow = "";
+      if (state.envelope.isExpanded && envelopeLetter) {
+        state.envelope.isExpanded = false;
+        envelopeLetter.classList.remove("expanded");
       }
 
       // Update Navigation styling
@@ -469,13 +474,30 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
+  function closeExpandedLetter() {
+    state.envelope.isExpanded = false;
+    envelopeLetter?.classList.remove("expanded");
+    document.body.style.overflow = ""; // Unlock scroll
+  }
+
   // Floating Close Button on expanded card
   const closeLetterBtn = document.getElementById("close-letter-btn");
   closeLetterBtn?.addEventListener("click", (e) => {
     e.stopPropagation();
-    state.envelope.isExpanded = false;
-    envelopeLetter.classList.remove("expanded");
-    document.body.style.overflow = ""; // Unlock scroll
+    closeExpandedLetter();
+  });
+
+  // Close expanded letter on backdrop click or ESC key
+  document.addEventListener("click", (e) => {
+    if (state.envelope.isExpanded && envelopeLetter && !envelopeLetter.contains(e.target) && !envelopeWrapper.contains(e.target)) {
+      closeExpandedLetter();
+    }
+  });
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && state.envelope.isExpanded) {
+      closeExpandedLetter();
+    }
   });
 
   function startMessageTyping() {

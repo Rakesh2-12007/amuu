@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Rockey-amuu 💗</title>
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -299,7 +299,7 @@
         </div>
 
         <!-- Screen 3: Chat Room UI (when PIN entered and user identified) -->
-        <div id="chat-room-interface" class="hidden glass-card border border-white/60 shadow-xl rounded-2xl overflow-hidden flex flex-col h-[520px] max-w-md mx-auto text-left">
+        <div id="chat-room-interface" class="hidden glass-card border border-white/60 shadow-xl rounded-2xl overflow-hidden flex flex-col h-[70vh] max-h-[520px] min-h-[350px] max-w-md mx-auto text-left">
           
           <!-- Chat Header -->
           <div class="bg-gradient-to-r from-pink-100 via-purple-50 to-indigo-100 p-4 border-b border-pink-100 flex justify-between items-center">
@@ -523,8 +523,8 @@
   <!-- =================================================================
      🧭 FLOATING BOTTOM NAVIGATION BAR
      ================================================================= -->
-  <nav id="floating-nav" class="hidden fixed bottom-4 left-1/2 transform -translate-x-1/2 z-30 w-[95%] max-w-xl glass-nav rounded-2xl shadow-xl border border-white/50 px-2 py-2 flex items-center justify-between overflow-x-auto scrollbar-none opacity-0 transition-opacity duration-500">
-    <div class="flex space-x-1 w-full justify-between min-w-[580px]">
+  <nav id="floating-nav" class="hidden fixed bottom-3 left-1/2 transform -translate-x-1/2 z-30 w-[94%] max-w-xl glass-nav rounded-2xl shadow-xl border border-white/50 px-2 py-1.5 flex items-center overflow-x-auto scrollbar-none opacity-0 transition-opacity duration-500">
+    <div class="flex space-x-1 w-full justify-between min-w-[480px] sm:min-w-0">
       <button data-nav-target="message" class="flex-1 py-2 px-1.5 rounded-xl flex flex-col items-center transition focus:outline-none text-pink-600 font-bold scale-105 active:scale-95 text-center">
         <span class="text-lg mb-0.5">💌</span>
         <span class="text-[9px] tracking-tight uppercase">Message</span>

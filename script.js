@@ -387,6 +387,9 @@ document.addEventListener("DOMContentLoaded", () => {
         if (target === sectionId) {
           btn.classList.add("text-pink-600", "font-bold", "scale-105");
           btn.classList.remove("text-gray-500");
+          try {
+            btn.scrollIntoView({ behavior: "smooth", block: "nearest", inline: "center" });
+          } catch (err) {}
         } else {
           btn.classList.remove("text-pink-600", "font-bold", "scale-105");
           btn.classList.add("text-gray-500");
@@ -736,6 +739,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // Click/Tap catcher
     canvas.addEventListener("mousedown", handleHeartClick);
     canvas.addEventListener("touchstart", handleHeartTouch, { passive: false });
+    canvas.addEventListener("touchmove", (e) => e.preventDefault(), { passive: false });
 
     function handleHeartClick(e) {
       const rect = canvas.getBoundingClientRect();
@@ -746,20 +750,22 @@ document.addEventListener("DOMContentLoaded", () => {
 
     function handleHeartTouch(e) {
       e.preventDefault();
-      const touch = e.touches[0];
       const rect = canvas.getBoundingClientRect();
-      const clickX = touch.clientX - rect.left;
-      const clickY = touch.clientY - rect.top;
-      catchHeartAt(clickX, clickY);
+      for (let i = 0; i < e.changedTouches.length; i++) {
+        const touch = e.changedTouches[i];
+        const clickX = touch.clientX - rect.left;
+        const clickY = touch.clientY - rect.top;
+        catchHeartAt(clickX, clickY);
+      }
     }
 
     function catchHeartAt(x, y) {
       const list = state.games.catchHearts.hearts;
       for (let i = list.length - 1; i >= 0; i--) {
         const h = list[i];
-        // Collision circle bounding check
+        // Expanded collision circle check for mobile finger taps (+28px padding)
         const dist = Math.hypot(h.x - x, h.y - y);
-        if (dist < h.size + 15) {
+        if (dist < h.size + 28) {
           list.splice(i, 1);
           state.games.catchHearts.score++;
           if (scoreText) scoreText.innerText = state.games.catchHearts.score;
@@ -968,8 +974,34 @@ document.addEventListener("DOMContentLoaded", () => {
       showFunnyMessage();
     });
 
+    // Touch proximity dodge for mobile screens
+    function handleTouchDodge(e) {
+      if (!e.touches || !e.touches[0]) return;
+      const touch = e.touches[0];
+      const boxRect = gameBox.getBoundingClientRect();
+      const touchX = touch.clientX - boxRect.left;
+      const touchY = touch.clientY - boxRect.top;
+
+      const heartLeft = parseFloat(heart.style.left) || (boxRect.width * 0.45);
+      const heartTop = parseFloat(heart.style.top) || (boxRect.height * 0.4);
+      const heartCenterX = heartLeft + 24;
+      const heartCenterY = heartTop + 24;
+
+      const dist = Math.hypot(touchX - heartCenterX, touchY - heartCenterY);
+      if (dist < 65 && dist > 15) {
+        if (Math.random() < 0.65) {
+          relocateHeart();
+          showFunnyMessage();
+        }
+      }
+    }
+
+    gameBox.addEventListener("touchmove", handleTouchDodge, { passive: true });
+    gameBox.addEventListener("touchstart", handleTouchDodge, { passive: true });
+
     // Tap/Click catcher
-    heart.addEventListener("click", (e) => {
+    function onHeartHit(e) {
+      if (e.cancelable) e.preventDefault();
       e.stopPropagation();
       state.games.escape.score++;
       
@@ -993,7 +1025,10 @@ document.addEventListener("DOMContentLoaded", () => {
           `;
         }, 300);
       }
-    });
+    }
+
+    heart.addEventListener("touchstart", onHeartHit, { passive: false });
+    heart.addEventListener("click", onHeartHit);
 
     function showFunnyMessage() {
       const idx = Math.floor(Math.random() * gConf.funnyMessages.length);
@@ -1035,7 +1070,7 @@ document.addEventListener("DOMContentLoaded", () => {
     container.innerHTML = `
       <div class="text-center w-full flex flex-col items-center">
         <p class="text-sm text-gray-600 mb-4">${getConfigValue(["games", "lovePuzzle", "instructions"], "")}</p>
-        <div class="grid grid-cols-3 gap-2 w-56 h-56 bg-purple-100 rounded-xl p-2 border border-purple-200" id="puzzle-grid-container"></div>
+        <div class="grid grid-cols-3 gap-2 w-64 h-64 sm:w-64 sm:h-64 max-w-full aspect-square bg-purple-100 rounded-xl p-2 border border-purple-200" id="puzzle-grid-container"></div>
       </div>
     `;
 
@@ -1060,6 +1095,30 @@ document.addEventListener("DOMContentLoaded", () => {
         tile.className = "w-full h-full glass-card flex justify-center items-center text-xl font-bold text-pink-600 border border-pink-300 rounded-lg shadow-sm cursor-pointer select-none puzzle-tile hover:bg-white transition-colors duration-150";
         tile.innerText = num;
         tile.addEventListener("click", () => handlePuzzleTileClick(index));
+
+        // Touch swipe support for mobile
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        tile.addEventListener("touchstart", (e) => {
+          if (e.touches[0]) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+          }
+        }, { passive: true });
+
+        tile.addEventListener("touchend", (e) => {
+          if (!e.changedTouches[0]) return;
+          const touchEndX = e.changedTouches[0].clientX;
+          const touchEndY = e.changedTouches[0].clientY;
+          const dx = touchEndX - touchStartX;
+          const dy = touchEndY - touchStartY;
+
+          // If swiped or tapped, attempt slide
+          if (Math.abs(dx) > 10 || Math.abs(dy) > 10) {
+            handlePuzzleTileClick(index);
+          }
+        }, { passive: true });
       }
       gridContainer.appendChild(tile);
     });

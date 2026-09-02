@@ -1312,7 +1312,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <div class="w-full h-40 bg-gradient-to-tr from-pink-200 to-purple-300 border border-gray-100 rounded-sm mb-3 flex flex-col justify-center items-center p-4 text-center">
               <span class="text-4xl mb-1">📸</span>
               <p class="text-xs font-semibold text-purple-900">${ph.title}</p>
-              <p class="text-[9px] text-gray-500">Double-tap for love</p>
+              <p class="text-[9px] text-pink-600 font-bold mt-1">Tap for Fullscreen 🔍</p>
             </div>
           `;
         }
@@ -1320,12 +1320,13 @@ document.addEventListener("DOMContentLoaded", () => {
         polaroid.innerHTML = `
           ${imgHtml}
           <div class="font-fancy text-xs font-bold text-purple-950 mb-1">${ph.title}</div>
-          <div class="text-[9px] text-gray-500 leading-tight">${ph.caption}</div>
+          <div class="text-[9px] text-gray-500 leading-tight mb-1">${ph.caption}</div>
+          <div class="text-[8px] text-pink-500 uppercase tracking-widest font-bold text-center mt-2">🔍 View Fullscreen</div>
         `;
         
-        polaroid.addEventListener("dblclick", () => {
-          triggerConfetti();
-          playTickSound();
+        // Single tap/click opens fullscreen lightbox
+        polaroid.addEventListener("click", () => {
+          openPhotoLightbox(ph);
         });
 
         photoContainer.appendChild(polaroid);
@@ -1351,6 +1352,73 @@ document.addEventListener("DOMContentLoaded", () => {
       });
     }
   }
+
+  /* =================================================================
+     📸 FULLSCREEN PHOTO LIGHTBOX SYSTEM 📸
+     ================================================================= */
+  
+  function openPhotoLightbox(photo) {
+    const modal = document.getElementById("photo-lightbox-modal");
+    const target = document.getElementById("lightbox-content-target");
+    const titleEl = document.getElementById("lightbox-title");
+    const captionEl = document.getElementById("lightbox-caption");
+
+    if (!modal || !target) return;
+
+    if (photo.url) {
+      target.innerHTML = `<img src="${photo.url}" alt="${photo.title || 'Photo'}" class="max-w-full max-h-[65vh] object-contain rounded-xl shadow-2xl">`;
+    } else {
+      target.innerHTML = `
+        <div class="w-full h-72 sm:h-96 bg-gradient-to-tr from-pink-400 via-purple-600 to-indigo-700 rounded-2xl flex flex-col justify-center items-center p-8 text-center text-white shadow-2xl">
+          <span class="text-7xl mb-4 animate-bounce">📸✨</span>
+          <h3 class="font-fancy text-2xl md:text-3xl font-bold mb-2 text-pink-200">${photo.title || 'Memory Photo'}</h3>
+          <p class="text-sm md:text-base text-purple-100 max-w-sm italic mb-4">"${photo.caption || ''}"</p>
+          <div class="text-[10px] bg-white/20 backdrop-blur-sm px-4 py-1.5 rounded-full font-mono uppercase tracking-widest text-white border border-white/30">
+            Amuu Classified Archives 🔐
+          </div>
+        </div>
+      `;
+    }
+
+    if (titleEl) titleEl.innerText = photo.title || "Secret Memory";
+    if (captionEl) captionEl.innerText = photo.caption ? `"${photo.caption}"` : "";
+
+    modal.classList.remove("hidden");
+    setTimeout(() => {
+      modal.classList.remove("opacity-0");
+      modal.classList.add("opacity-100");
+    }, 20);
+
+    triggerConfetti();
+    playTickSound();
+  }
+
+  function closePhotoLightbox() {
+    const modal = document.getElementById("photo-lightbox-modal");
+    if (!modal) return;
+
+    modal.classList.remove("opacity-100");
+    modal.classList.add("opacity-0");
+    setTimeout(() => {
+      modal.classList.add("hidden");
+    }, 300);
+  }
+
+  // Bind Lightbox controls
+  const closeLightboxBtn = document.getElementById("close-lightbox-btn");
+  closeLightboxBtn?.addEventListener("click", closePhotoLightbox);
+
+  document.getElementById("photo-lightbox-modal")?.addEventListener("click", (e) => {
+    if (e.target.id === "photo-lightbox-modal") {
+      closePhotoLightbox();
+    }
+  });
+
+  window.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      closePhotoLightbox();
+    }
+  });
 
   /* =================================================================
      🧩 OUR MINI QUIZ 🧩

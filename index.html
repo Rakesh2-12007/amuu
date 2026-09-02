@@ -4,6 +4,8 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Rockey-amuu 💗</title>
+  <!-- Favicon Logo -->
+  <link rel="icon" type="image/jpeg" href="images/logo.jpg">
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -66,8 +68,11 @@
     
     <!-- App Header -->
     <header class="text-center mb-8 flex flex-col items-center">
-      <div id="app-logo" class="inline-block text-3xl md:text-4xl cursor-pointer hover:scale-110 active:scale-95 transition-transform duration-200" title="Click for a sparkle!">✨💖✨</div>
-      <h2 class="text-xs uppercase tracking-widest text-pink-500 font-bold mt-1 font-fancy">Amuu's Digital World</h2>
+      <div id="app-logo" class="inline-flex items-center space-x-3 cursor-pointer hover:scale-105 active:scale-95 transition-transform duration-200" title="Click for a sparkle!">
+        <img src="images/logo.jpg" alt="Amuu Logo" class="w-12 h-12 md:w-14 md:h-14 rounded-full shadow-lg border-2 border-pink-300/80 object-cover">
+        <span class="text-2xl md:text-3xl font-fancy font-bold text-pink-600">Amuu 💗</span>
+      </div>
+      <h2 class="text-xs uppercase tracking-widest text-pink-500 font-bold mt-1 font-fancy">Digital World</h2>
     </header>
 
     <!-- 💌 A Little Message Page -->
@@ -506,6 +511,22 @@
     </footer>
 
   </main>
+
+  <!-- =================================================================
+     📸 FULLSCREEN PHOTO LIGHTBOX MODAL
+     ================================================================= -->
+  <div id="photo-lightbox-modal" class="hidden fixed inset-0 w-full h-full bg-black/90 backdrop-blur-md z-50 flex flex-col justify-center items-center p-4 transition-all duration-300 opacity-0">
+    <button id="close-lightbox-btn" class="absolute top-4 right-4 text-white/80 hover:text-white font-bold text-3xl p-2.5 focus:outline-none transition z-50 cursor-pointer" aria-label="Close Lightbox">✕</button>
+    <div class="max-w-3xl w-full max-h-[85vh] flex flex-col items-center justify-center p-2 relative animate-scale-up">
+      <div id="lightbox-content-target" class="w-full flex justify-center items-center overflow-hidden rounded-2xl shadow-2xl border border-white/20 max-h-[65vh]">
+        <!-- Fullscreen photo content loads here -->
+      </div>
+      <div class="mt-4 text-center text-white max-w-lg">
+        <h4 id="lightbox-title" class="font-fancy text-lg md:text-xl font-bold text-pink-400 mb-1"></h4>
+        <p id="lightbox-caption" class="text-xs md:text-sm text-purple-200 font-sans italic leading-relaxed"></p>
+      </div>
+    </div>
+  </div>
 
   <!-- =================================================================
      🎮 GENERAL GAME RUNTIME OVERLAY (MODAL MODAL)

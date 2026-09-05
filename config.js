@@ -21,6 +21,8 @@ const romanticConfig = {
     { id: "games", title: "Let's Play", emoji: "🎮" },
     { id: "secret", title: "Secret Room", emoji: "🔐" },
     { id: "chat", title: "Our Chat", emoji: "💬" },
+    { id: "apology", title: "Apology", emoji: "🥺" },
+    { id: "missing", title: "Missing You", emoji: "💗" },
     { id: "quiz", title: "Our Mini Quiz", emoji: "🧩" },
     { id: "midnight", title: "Midnight Corner", emoji: "🌙" },
     { id: "surprise", title: "Surprise", emoji: "💖" },
@@ -283,12 +285,179 @@ No templates, no boring structures — just pure, dedicated effort for a special
 Thank you for being such an inspiration. Keep shining! 🌟`
   },
 
-  // Chat Room settings
+  // Chat Room & Complaint Box settings
   chat: {
     title: "Our Secret Chat Room 💬",
     subtitle: "A private, real-time connection just for us two.",
     topic: "amuu_rakesh_love_chat_2026_xyz", // ntfy.sh secret topic
-    pinPrompt: "This chat room is encrypted. Please enter the secret PIN in the Secret Room first to unlock it! 🔐"
+    pinPrompt: "This chat room is encrypted. Please enter the secret PIN in the Secret Room first to unlock it! 🔐",
+    categories: [
+      { id: "silly", label: "Silly 😜", bg: "bg-amber-100 text-amber-800 border-amber-200" },
+      { id: "peeve", label: "Pet Peeve 🍕", bg: "bg-indigo-100 text-indigo-800 border-indigo-200" },
+      { id: "annoyed", label: "Mild Annoyance 😤", bg: "bg-rose-100 text-rose-800 border-rose-200" },
+      { id: "sweet", label: "Sweet Complaint 🥺", bg: "bg-pink-100 text-pink-800 border-pink-200" }
+    ],
+    sampleComplaints: [
+      {
+        id: "c_sample_1",
+        sender: "Amuu",
+        text: "You take way too long to reply when you say 'BRB 2 minutes'! ⏱️",
+        category: "annoyed",
+        time: Date.now() - 86400000,
+        resolved: false
+      },
+      {
+        id: "c_sample_2",
+        sender: "Rakesh",
+        text: "You send 10 messages in a row instead of one single paragraph! 😂",
+        category: "silly",
+        time: Date.now() - 43200000,
+        resolved: true
+      }
+    ]
+  },
+
+  // 🥺 Cute Apology Page Settings
+  apology: {
+    userName: "Amuu",
+    authorName: "Rakesh",
+    openingDialogue: [
+      "Ummm... I may have done something stupid 🥲",
+      "And apparently someone deserves an apology...",
+      "Who? 👀",
+      "You. Obviously 😭❤️",
+      "Okay okay... serious mode now."
+    ],
+    letterIntro: "I wrote you something...",
+    letterButton: "Open it carefully 💌",
+    typedMessage: `Hey you ❤️<br><br>
+    I know I might have annoyed you, hurt you, made you upset, or simply acted like an idiot.<br><br>
+    And jokes aside...<br><br>
+    I'm genuinely sorry.<br><br>
+    I never want something I did to become the reason your smile disappears.<br><br>
+    You mean a lot more to me than I probably say properly.<br><br>
+    So here's my tiny digital apology...<br><br>
+    with approximately <strong>73% embarrassment</strong>,<br>
+    <strong>22% overthinking</strong>,<br>
+    and <strong>5% courage</strong> 😂❤️`,
+    angryGame: {
+      question: "Are you still angry with me? 🥺",
+      dodgingMessages: [
+        "WAIT 😭",
+        "Let's discuss this peacefully.",
+        "I brought virtual chocolate 🍫",
+        "Look... a puppy 🐶",
+        "Okay fine, you win 😭❤️"
+      ],
+      responseYes: "Understandable 😭 I'll keep trying.",
+      responseMaybe: "PROGRESS 😭❤️"
+    },
+    forgiveMeter: {
+      items: [
+        { label: "Accept Chocolate 🍫", val: 15 },
+        { label: "Accept Ice Cream 🍦", val: 20 },
+        { label: "Accept Unlimited Memes 😂", val: 25 },
+        { label: "Accept One Free Argument Win 😭", val: 30 },
+        { label: "Accept My Apology 🥺❤️", val: 100 }
+      ],
+      certificateTitle: "Certificate of Forgiveness 🎓✨",
+      certificateSub: "I will save this certificate for future arguments 😂❤️"
+    },
+    heartPuzzle: {
+      title: "Fix My Mistake 🧩",
+      subtitle: "Click or tap the broken heart pieces to put them back together!",
+      completionMsg: "Okay... heart repaired ❤️\nNow I just need to make sure I don't break your mood again 😭"
+    },
+    ending: {
+      line1: "One last thing...",
+      line2: "I'm sorry. Properly this time. ❤️",
+      line3: "No tricks.\nNo jokes.\nJust me saying that you matter to me.",
+      buttonText: "Fineeee 🙄❤️",
+      successMsg: "MISSION SUCCESSFUL 😭🎉"
+    }
+  },
+
+  // 💗 Missing You Dashboard Settings
+  missingDashboard: {
+    startingMissingCount: 12847,
+    increaseEveryMinutes: 0.1, // fast live increment for demonstration (ticks every ~6 sec)
+    increaseByMin: 1,
+    increaseByMax: 4,
+    stats: [
+      { id: "stat1", title: "Times I almost texted you", value: "2,341", emoji: "📱" },
+      { id: "stat2", title: "Random things that reminded me of you", value: "987", emoji: "💭" },
+      { id: "stat3", title: "Times I checked if you replied", value: "Definitely too many 😭", emoji: "👀" },
+      { id: "stat4", title: "Songs that suddenly became about you", value: "42", emoji: "🎵" },
+      { id: "stat5", title: "Times I said 'I'm not going to text first'", value: "18", emoji: "😤" },
+      { id: "stat6", title: "Times I actually succeeded", value: "0 💀", emoji: "🤡" }
+    ],
+    levels: [
+      { text: "🙂 Normal", color: "text-emerald-600", bg: "bg-emerald-100" },
+      { text: "🥹 Kinda Missing You", color: "text-blue-600", bg: "bg-blue-100" },
+      { text: "🥺 Missing You", color: "text-purple-600", bg: "bg-purple-100" },
+      { text: "😭 Missing You A LOT", color: "text-pink-600", bg: "bg-pink-100" },
+      { text: "🚨 EMERGENCY: TEXT HER", color: "text-rose-600 font-bold animate-pulse", bg: "bg-rose-100" }
+    ],
+    reasons: [
+      "Because conversations feel different with you.",
+      "Because your random messages somehow make my day better.",
+      "Because annoying you is one of my favorite hobbies 😂",
+      "Because you're weird... but unfortunately my favorite kind of weird.",
+      "Because some people become part of your routine without you noticing.",
+      "Because nobody else gets my terrible jokes like you do 🤓",
+      "Because my phone feels boring when there's no notification from you.",
+      "Because you listen to my random rants without judging me ☕",
+      "Because you make ordinary moments feel like special memories ✨",
+      "Because I saw something hilarious today and wanted to send it to you first.",
+      "Because life is 100x more fun when you're around 🎈",
+      "Because you have the absolute best laugh in the world 🌸",
+      "Because coffee alone isn't as good as coffee with you ☕❤️",
+      "Because you always know how to cheer me up when I'm stressed.",
+      "Because our late-night chats are the best part of my week 🌙",
+      "Because you're my favorite human to share gossip with 🤫",
+      "Because you somehow tolerate my chaotic energy 😂",
+      "Because you're genuinely irreplaceable.",
+      "Because thinking of you automatically puts a smile on my face 😊",
+      "Because you're Amuu! What other reason do I need? 💗"
+    ],
+    buttonMessages: [
+      "Counter updated 😂",
+      "As if it wasn't high enough.",
+      "Okay this is becoming embarrassing.",
+      "Please stop exposing me 😭",
+      "Yep... still missing you! ❤️",
+      "Over 9000 missing power! 💥"
+    ],
+    lastConversationDate: "2026-09-04T20:00:00" // Customizable ISO timestamp for last proper call/chat
+  },
+
+  // 🔔 Floating Story Notification System
+  romanticNotifications: {
+    enabled: true,
+    intervalSeconds: 35, // Trigger a story prompt every 35 seconds
+    prompts: [
+      { text: "💌 New message from someone who misses you", target: "chat", icon: "💌" },
+      { text: "🥺 Apology request waiting...", target: "apology", icon: "🥺" },
+      { text: "💗 Missing counter updated", target: "missing", icon: "💗" },
+      { text: "✨ Someone is thinking about you right now", target: "message", icon: "✨" },
+      { text: "🎮 Can you beat your high score in Catch Hearts?", target: "games", icon: "🎮" },
+      { text: "🌙 Have you checked Midnight Corner tonight?", target: "midnight", icon: "🌙" }
+    ]
+  },
+
+  // ✨ Hidden Final Surprise
+  finalSurprise: {
+    unlockPrompt: "✨ You've unlocked something special...",
+    title: "The Simple Truth ❤️",
+    textLines: [
+      "I built all these games,",
+      "counters,",
+      "buttons,",
+      "animations,",
+      "and stupid little jokes...",
+      "But the actual message is pretty simple.",
+      "I'm really glad you're in my life. ❤️"
+    ]
   },
 
   // 💕 Final Screen / Outro
@@ -302,3 +471,4 @@ Thank you for being such an inspiration. Keep shining! 🌟`
 
 // Export to window so script.js can access it directly in the browser
 window.romanticConfig = romanticConfig;
+

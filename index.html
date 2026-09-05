@@ -46,6 +46,29 @@
     <span class="text-xl">🔇</span>
   </button>
 
+  <!-- 🔔 Global Real-Time Chat Popup Notification Banner -->
+  <div id="chat-popup-notification" class="hidden fixed top-4 left-1/2 transform -translate-x-1/2 z-50 w-[92%] max-w-sm glass-card border-2 border-pink-300 shadow-2xl p-3.5 rounded-2xl flex items-start space-x-3 transition-all duration-300 transform -translate-y-12 opacity-0">
+    <div id="popup-avatar-icon" class="text-2xl p-2 bg-pink-100 rounded-full flex items-center justify-center shrink-0 shadow-inner">
+      💬
+    </div>
+    <div class="flex-1 min-w-0">
+      <div class="flex justify-between items-center mb-0.5">
+        <h5 id="popup-sender-name" class="text-xs font-bold text-purple-950 truncate">New Message</h5>
+        <span id="popup-time" class="text-[9px] text-gray-400 font-semibold">Just now</span>
+      </div>
+      <p id="popup-message-text" class="text-xs text-gray-700 truncate leading-snug font-medium"></p>
+      <div class="mt-2 flex space-x-2">
+        <button id="popup-action-btn" class="px-3 py-1 bg-pink-500 hover:bg-pink-600 text-white rounded-lg text-[10px] font-bold shadow transition active:scale-95 cursor-pointer">
+          Open Chat 💬
+        </button>
+        <button id="popup-dismiss-btn" class="px-2 py-1 bg-gray-100 hover:bg-gray-200 text-gray-600 rounded-lg text-[10px] font-semibold transition cursor-pointer">
+          Dismiss
+        </button>
+      </div>
+    </div>
+    <button id="popup-close-x" class="text-gray-400 hover:text-gray-600 text-xs p-1 focus:outline-none cursor-pointer">✕</button>
+  </div>
+
   <!-- =================================================================
      👋 LANDING / INTRO SCREEN
      ================================================================= -->
@@ -303,40 +326,91 @@
           </div>
         </div>
 
-        <!-- Screen 3: Chat Room UI (when PIN entered and user identified) -->
-        <div id="chat-room-interface" class="hidden glass-card border border-white/60 shadow-xl rounded-2xl overflow-hidden flex flex-col h-[70vh] max-h-[520px] min-h-[350px] max-w-md mx-auto text-left">
+        <!-- Screen 3 Container: Sub-navigation & Active Views -->
+        <div id="chat-active-container" class="hidden">
           
-          <!-- Chat Header -->
-          <div class="bg-gradient-to-r from-pink-100 via-purple-50 to-indigo-100 p-4 border-b border-pink-100 flex justify-between items-center">
-            <div class="flex items-center space-x-2">
-              <span class="text-2xl animate-pulse">💬</span>
-              <div>
-                <h4 class="text-sm font-bold text-purple-950">Amuu & Rakesh Connection</h4>
-                <p id="chat-user-label" class="text-[10px] text-pink-600 font-semibold uppercase">Chatting as: ...</p>
+          <!-- Chat Sub-Navigation Bar -->
+          <div id="chat-sub-nav" class="flex justify-center space-x-2 mb-4 max-w-md mx-auto">
+            <button id="chat-tab-btn-chat" class="flex-1 py-2 px-3 rounded-xl font-bold text-xs shadow-sm transition-all flex items-center justify-center space-x-1.5 bg-gradient-to-r from-pink-500 to-purple-600 text-white cursor-pointer active:scale-95">
+              <span>💬 Messages</span>
+            </button>
+            <button id="chat-tab-btn-complaints" class="flex-1 py-2 px-3 rounded-xl font-bold text-xs shadow-sm transition-all flex items-center justify-center space-x-1.5 bg-white/70 hover:bg-white text-purple-950 border border-pink-100 cursor-pointer active:scale-95 relative">
+              <span>⚡ Complaint Box</span>
+              <span id="complaints-pending-badge" class="hidden bg-rose-500 text-white text-[9px] px-1.5 py-0.2 rounded-full font-bold">0</span>
+            </button>
+          </div>
+
+          <!-- View A: Chat Room UI -->
+          <div id="chat-room-interface" class="glass-card border border-white/60 shadow-xl rounded-2xl overflow-hidden flex flex-col h-[70vh] max-h-[520px] min-h-[350px] max-w-md mx-auto text-left">
+            
+            <!-- Chat Header -->
+            <div class="bg-gradient-to-r from-pink-100 via-purple-50 to-indigo-100 p-4 border-b border-pink-100 flex justify-between items-center">
+              <div class="flex items-center space-x-2">
+                <span class="text-2xl animate-pulse">💬</span>
+                <div>
+                  <h4 class="text-sm font-bold text-purple-950">Amuu & Rakesh Connection</h4>
+                  <p id="chat-user-label" class="text-[10px] text-pink-600 font-semibold uppercase">Chatting as: ...</p>
+                </div>
+              </div>
+              <!-- Right Header Actions -->
+              <div class="flex items-center space-x-1.5">
+                <button id="chat-test-notify-btn" class="text-[10px] bg-pink-200/60 hover:bg-pink-200 text-pink-800 px-2 py-1 rounded-md font-bold focus:outline-none transition active:scale-95 flex items-center space-x-1 cursor-pointer" title="Test Live Popup Notification">
+                  <span>🔔 Test</span>
+                </button>
+                <button id="chat-reset-identity-btn" class="text-[10px] bg-purple-200/50 hover:bg-purple-200 text-purple-950 px-2.5 py-1 rounded-md font-bold focus:outline-none transition active:scale-95 cursor-pointer">
+                  Switch User
+                </button>
               </div>
             </div>
-            <!-- Switch user button -->
-            <button id="chat-reset-identity-btn" class="text-[10px] bg-purple-200/50 hover:bg-purple-200 text-purple-950 px-2.5 py-1 rounded-md font-bold focus:outline-none transition active:scale-95">
-              Switch User
-            </button>
+
+            <!-- Messages Stream -->
+            <div id="chat-messages-thread" class="flex-1 p-4 overflow-y-auto space-y-3 bg-white/40 flex flex-col">
+              <!-- Messages bubbles will load here -->
+            </div>
+
+            <!-- Chat Input Area -->
+            <div class="p-3 bg-white/70 border-t border-pink-100 flex items-center space-x-2">
+              <button id="chat-clear-history-btn" class="text-xs hover:text-rose-500 text-gray-400 p-2 font-bold focus:outline-none transition cursor-pointer" title="Clear Local Chat History">
+                🗑️
+              </button>
+              <input type="text" id="chat-input-text" placeholder="Type a message..." class="flex-1 py-2 px-4 rounded-full border border-pink-200 text-sm focus:outline-none focus:border-pink-400 bg-white/80">
+              <button id="chat-send-btn" class="p-2.5 bg-pink-500 hover:bg-pink-600 text-white rounded-full font-bold shadow transition active:scale-95 flex items-center justify-center cursor-pointer">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+              </button>
+            </div>
+
           </div>
 
-          <!-- Messages Stream -->
-          <div id="chat-messages-thread" class="flex-1 p-4 overflow-y-auto space-y-3 bg-white/40 flex flex-col">
-            <!-- Messages bubbles will load here -->
-          </div>
+          <!-- View B: Complaints Space UI -->
+          <div id="chat-complaints-interface" class="hidden glass-card border border-white/60 shadow-xl rounded-2xl p-4 md:p-5 max-w-md mx-auto text-left flex flex-col h-[70vh] max-h-[520px] min-h-[350px]">
+            
+            <!-- Complaints Header -->
+            <div class="flex justify-between items-center pb-3 border-b border-pink-100 mb-3">
+              <div>
+                <h4 class="text-sm font-bold text-purple-950 flex items-center space-x-1">
+                  <span>⚡ Our Complaint Box</span>
+                </h4>
+                <p class="text-[10px] text-gray-500">Say your minor grievances freely & forgive with love ❤️</p>
+              </div>
+              <button id="open-complaint-modal-btn" class="px-3 py-1.5 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-full font-bold text-xs shadow transition active:scale-95 flex items-center space-x-1 cursor-pointer">
+                <span>+ Post Complaint</span>
+              </button>
+            </div>
 
-          <!-- Chat Input Area -->
-          <div class="p-3 bg-white/70 border-t border-pink-100 flex items-center space-x-2">
-            <button id="chat-clear-history-btn" class="text-xs hover:text-rose-500 text-gray-400 p-2 font-bold focus:outline-none transition" title="Clear Local Chat History">
-              🗑️
-            </button>
-            <input type="text" id="chat-input-text" placeholder="Type a message..." class="flex-1 py-2 px-4 rounded-full border border-pink-200 text-sm focus:outline-none focus:border-pink-400 bg-white/80">
-            <button id="chat-send-btn" class="p-2.5 bg-pink-500 hover:bg-pink-600 text-white rounded-full font-bold shadow transition active:scale-95 flex items-center justify-center">
-              <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 transform rotate-90" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-              </svg>
-            </button>
+            <!-- Filter chips -->
+            <div class="flex items-center space-x-2 mb-3 text-[11px] overflow-x-auto pb-1 scrollbar-none">
+              <button data-complaint-filter="all" class="complaint-filter-chip active px-2.5 py-1 rounded-full font-bold bg-pink-500 text-white shadow-sm cursor-pointer">All</button>
+              <button data-complaint-filter="pending" class="complaint-filter-chip px-2.5 py-1 rounded-full font-semibold bg-white/80 text-gray-600 hover:bg-pink-100 cursor-pointer">⏳ Pending</button>
+              <button data-complaint-filter="resolved" class="complaint-filter-chip px-2.5 py-1 rounded-full font-semibold bg-white/80 text-gray-600 hover:bg-pink-100 cursor-pointer">✅ Resolved</button>
+            </div>
+
+            <!-- Complaints Cards List -->
+            <div id="complaints-list-container" class="flex-1 overflow-y-auto space-y-3 pr-1">
+              <!-- JS renders complaint items here -->
+            </div>
+
           </div>
 
         </div>
@@ -476,6 +550,352 @@
       </div>
     </section>
 
+    <!-- 🥺 Cute Apology Page -->
+    <section id="section-apology" class="hidden transition-all duration-300 opacity-0 scale-95">
+      <div class="text-center max-w-xl mx-auto">
+        <h3 class="text-2xl md:text-3xl font-fancy font-bold text-purple-950 mb-1">Cute Apology Corner 🥺</h3>
+        <p class="text-xs text-gray-500 mb-6">A sincere, playful message just for you.</p>
+
+        <!-- Screen 1: Lock prompt (if PIN not entered in Secret Room) -->
+        <div id="apology-lock-prompt" class="glass-card p-8 border border-white/60 max-w-sm mx-auto shadow-xl">
+          <span class="text-5xl mb-4 block">🔒🥺</span>
+          <h4 class="text-lg font-fancy font-bold text-purple-950 mb-2">Encrypted Connection</h4>
+          <p class="text-xs text-gray-500 mb-6 leading-relaxed">This apology corner is private. Please enter the secret PIN in the Secret Room first to unlock it! 🔐</p>
+          <button onclick="document.querySelectorAll('[data-nav-target=secret]')[0].click()" class="px-6 py-2.5 bg-pink-500 hover:bg-pink-600 text-white rounded-full font-bold shadow-lg transition text-xs uppercase tracking-wider cursor-pointer">
+            Go to Secret Room 🔑
+          </button>
+        </div>
+
+        <!-- Screen 2: Identity Selection (if PIN entered but user not identified) -->
+        <div id="apology-identity-screen" class="hidden glass-card p-8 border border-white/60 max-w-sm mx-auto shadow-xl">
+          <span class="text-5xl mb-4 block">🌸☕</span>
+          <h4 class="text-lg font-fancy font-bold text-purple-950 mb-2">Identify Yourself</h4>
+          <p class="text-xs text-gray-500 mb-6 leading-relaxed">To view the apology, please select who you are. This choice will be saved on your browser.</p>
+          <div class="flex flex-col space-y-3">
+            <button class="select-identity-amuu-btn px-6 py-3 bg-pink-100 hover:bg-pink-200 text-pink-700 rounded-xl font-bold transition flex items-center justify-center space-x-2 border border-pink-200 active:scale-95 duration-100 cursor-pointer">
+              <span>I am Amuu</span>
+              <span>🌸</span>
+            </button>
+            <button class="select-identity-rakesh-btn px-6 py-3 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-xl font-bold transition flex items-center justify-center space-x-2 border border-purple-200 active:scale-95 duration-100 cursor-pointer">
+              <span>I am Rakesh</span>
+              <span>☕</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Screen 3: Unlocked Active Apology Container -->
+        <div id="apology-active-container" class="hidden space-y-6">
+
+          <!-- User header banner -->
+          <div class="flex justify-between items-center bg-pink-50/80 p-3 rounded-xl border border-pink-100 max-w-md mx-auto shadow-sm">
+            <span id="apology-user-label" class="text-xs font-bold text-pink-600">Viewing as: ...</span>
+            <button class="apology-reset-identity-btn text-[10px] bg-purple-200/60 hover:bg-purple-200 text-purple-950 px-2.5 py-1 rounded-md font-bold transition cursor-pointer">
+              Switch User
+            </button>
+          </div>
+
+          <!-- Stage 1: Interactive Dialogue Opening -->
+          <div id="apology-dialogue-card" class="glass-card p-6 md:p-8 border border-white/60 shadow-xl max-w-md mx-auto text-center space-y-4 animate-scale-up">
+            <div id="apology-avatar" class="text-6xl mb-2 animate-bounce select-none">🥺</div>
+            <p id="apology-dialogue-text" class="text-sm md:text-base font-fancy font-bold text-purple-950 min-h-[50px] flex items-center justify-center">
+              Ummm... I may have done something stupid 🥲
+            </p>
+            <div id="apology-dialogue-action" class="pt-2">
+              <button id="apology-next-dialogue-btn" class="px-6 py-2.5 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white rounded-full font-bold shadow-lg transition active:scale-95 text-xs uppercase tracking-wider cursor-pointer">
+                Next →
+              </button>
+            </div>
+          </div>
+
+          <!-- Stage 2: Apology Letter Envelope Reveal (Hidden initially) -->
+          <div id="apology-letter-container" class="hidden space-y-6 animate-fade-in mt-6">
+            <div class="glass-card p-6 border border-pink-200/60 max-w-md mx-auto shadow-xl">
+              <span class="text-4xl mb-2 block">💌</span>
+              <h4 class="text-base font-fancy font-bold text-pink-600 mb-1">I wrote you something...</h4>
+              <p class="text-xs text-gray-500 mb-4">Please read this with an open heart</p>
+              <button id="open-apology-letter-btn" class="px-6 py-2.5 bg-pink-500 hover:bg-pink-600 text-white rounded-full font-bold shadow transition text-xs active:scale-95 cursor-pointer">
+                Open it carefully 💌
+              </button>
+
+              <!-- Letter Body -->
+              <div id="apology-typed-body" class="hidden mt-6 text-left bg-white/90 p-5 rounded-2xl border border-pink-100 text-xs md:text-sm text-gray-700 leading-relaxed font-sans shadow-inner">
+                <!-- JS Injects Typed Apology Here -->
+              </div>
+            </div>
+
+            <!-- Stage 3: Are You Still Angry? Game -->
+            <div id="apology-angry-section" class="hidden glass-card p-6 border border-purple-200/60 max-w-md mx-auto shadow-xl text-center space-y-4">
+              <h4 class="text-base font-fancy font-bold text-purple-950">Okay... important question.</h4>
+              <p class="text-xs text-gray-600 font-semibold">Are you still angry with me? 🥺</p>
+              
+              <!-- Funny evasion message toast -->
+              <div id="angry-dodge-toast" class="hidden text-xs font-bold text-rose-600 bg-rose-50 border border-rose-200 p-2 rounded-xl animate-pulse">
+                WAIT 😭
+              </div>
+
+              <div class="flex justify-center items-center space-x-4 relative min-h-[60px]" id="angry-buttons-area">
+                <button id="angry-btn-maybe" class="px-6 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full font-bold text-xs shadow transition active:scale-95 cursor-pointer">
+                  Maybe 😒
+                </button>
+                <button id="angry-btn-yes" class="px-6 py-2.5 bg-rose-500 hover:bg-rose-600 text-white rounded-full font-bold text-xs shadow transition cursor-pointer relative transition-all duration-200">
+                  Yes 😤
+                </button>
+              </div>
+
+              <div id="angry-response-msg" class="hidden text-xs font-bold text-purple-800 italic pt-2"></div>
+            </div>
+
+            <!-- Stage 4: Forgive Meter & Certificate -->
+            <div id="apology-meter-section" class="hidden glass-card p-6 border border-pink-300 max-w-md mx-auto shadow-xl space-y-4">
+              <h4 class="text-base font-fancy font-bold text-purple-950">Forgiveness Meter 💖</h4>
+              
+              <!-- Meter Bar -->
+              <div class="w-full bg-pink-100 h-5 rounded-full overflow-hidden p-0.5 border border-pink-200 relative">
+                <div id="forgive-progress-bar" class="h-full bg-gradient-to-r from-pink-400 via-rose-500 to-emerald-400 rounded-full transition-all duration-500 w-0"></div>
+                <span id="forgive-percentage-text" class="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-purple-950">0% Forgiven 🥲</span>
+              </div>
+
+              <p class="text-[11px] text-gray-500">Bribe your way to 100% forgiveness:</p>
+
+              <div id="forgive-bribe-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <!-- JS generates bribe buttons -->
+              </div>
+
+              <!-- Official Certificate (Revealed at 100%) -->
+              <div id="forgive-certificate-card" class="hidden bg-gradient-to-tr from-amber-50 via-white to-pink-50 border-2 border-amber-300 rounded-2xl p-5 shadow-lg text-center space-y-2 animate-scale-up">
+                <span class="text-3xl">🎉📜🏆</span>
+                <h5 class="font-fancy font-bold text-sm text-amber-800 uppercase tracking-wider">Certificate of Forgiveness</h5>
+                <p class="text-[11px] text-gray-700 leading-relaxed font-sans">
+                  This certifies that <strong id="cert-user-name" class="text-pink-600">Amuu</strong><br>
+                  has officially forgiven <strong id="cert-author-name" class="text-purple-700">Rakesh</strong> ❤️
+                </p>
+                <p class="text-[9px] text-gray-400 italic">Terms & conditions may apply 😂 • <span id="cert-date-text">Today</span></p>
+                <p class="text-[10px] font-bold text-emerald-600 pt-1">I will save this certificate for future arguments 😂❤️</p>
+              </div>
+            </div>
+
+            <!-- Stage 5: Fix My Mistake Mini-Game -->
+            <div id="apology-puzzle-section" class="hidden glass-card p-6 border border-purple-200 max-w-md mx-auto shadow-xl text-center space-y-4">
+              <h4 class="text-base font-fancy font-bold text-purple-950">Fix My Mistake 🧩</h4>
+              <p class="text-xs text-gray-500">Tap the broken heart pieces to put them back together!</p>
+
+              <div id="heart-puzzle-board" class="grid grid-cols-2 gap-3 max-w-[220px] mx-auto p-4 bg-purple-50/70 rounded-2xl border border-purple-100">
+                <!-- JS renders 4 heart piece buttons -->
+              </div>
+
+              <div id="heart-puzzle-status" class="hidden text-xs font-bold text-pink-600 leading-relaxed animate-bounce">
+                Okay... heart repaired ❤️<br>
+                <span class="text-[10px] font-normal text-gray-600">Now I just need to make sure I don't break your mood again 😭</span>
+              </div>
+            </div>
+
+            <!-- Stage 6: Sincere Closing -->
+            <div id="apology-ending-section" class="hidden glass-card p-6 border border-pink-300 max-w-md mx-auto shadow-xl text-center space-y-4">
+              <h4 class="text-base font-fancy font-bold text-purple-950">One last thing...</h4>
+              <p class="text-xs md:text-sm text-gray-700 leading-relaxed font-sans font-medium whitespace-pre-line bg-white/60 p-4 rounded-xl border border-pink-100">
+                I'm sorry. Properly this time. ❤️
+
+                No tricks.
+                No jokes.
+                Just me saying that you matter to me.
+              </p>
+              <button id="apology-final-accept-btn" class="px-8 py-3 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white rounded-full font-bold text-xs shadow-lg transition active:scale-95 cursor-pointer">
+                Fineeee 🙄❤️
+              </button>
+              <div id="apology-mission-badge" class="hidden text-sm font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 p-3 rounded-xl animate-bounce">
+                MISSION SUCCESSFUL 😭🎉
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
+    <!-- 💗 Missing You Dashboard -->
+    <section id="section-missing" class="hidden transition-all duration-300 opacity-0 scale-95">
+      <div class="text-center max-w-2xl mx-auto space-y-6">
+        <div>
+          <h3 class="text-2xl md:text-3xl font-fancy font-bold text-purple-950 mb-1">Missing You Dashboard 💗</h3>
+          <p class="text-xs text-gray-500">Real-time statistics & playful thoughts updated together.</p>
+        </div>
+
+        <!-- Screen 1: Lock prompt (if PIN not entered in Secret Room) -->
+        <div id="missing-lock-prompt" class="glass-card p-8 border border-white/60 max-w-sm mx-auto shadow-xl">
+          <span class="text-5xl mb-4 block">🔒💗</span>
+          <h4 class="text-lg font-fancy font-bold text-purple-950 mb-2">Encrypted Connection</h4>
+          <p class="text-xs text-gray-500 mb-6 leading-relaxed">This missing dashboard is private. Please enter the secret PIN in the Secret Room first to unlock it! 🔐</p>
+          <button onclick="document.querySelectorAll('[data-nav-target=secret]')[0].click()" class="px-6 py-2.5 bg-pink-500 hover:bg-pink-600 text-white rounded-full font-bold shadow-lg transition text-xs uppercase tracking-wider cursor-pointer">
+            Go to Secret Room 🔑
+          </button>
+        </div>
+
+        <!-- Screen 2: Identity Selection (if PIN entered but user not identified) -->
+        <div id="missing-identity-screen" class="hidden glass-card p-8 border border-white/60 max-w-sm mx-auto shadow-xl">
+          <span class="text-5xl mb-4 block">🌸☕</span>
+          <h4 class="text-lg font-fancy font-bold text-purple-950 mb-2">Identify Yourself</h4>
+          <p class="text-xs text-gray-500 mb-6 leading-relaxed">To view real missing statistics, please select who you are. This choice will be saved on your browser.</p>
+          <div class="flex flex-col space-y-3">
+            <button class="select-identity-amuu-btn px-6 py-3 bg-pink-100 hover:bg-pink-200 text-pink-700 rounded-xl font-bold transition flex items-center justify-center space-x-2 border border-pink-200 active:scale-95 duration-100 cursor-pointer">
+              <span>I am Amuu</span>
+              <span>🌸</span>
+            </button>
+            <button class="select-identity-rakesh-btn px-6 py-3 bg-purple-100 hover:bg-purple-200 text-purple-700 rounded-xl font-bold transition flex items-center justify-center space-x-2 border border-purple-200 active:scale-95 duration-100 cursor-pointer">
+              <span>I am Rakesh</span>
+              <span>☕</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Screen 3: Unlocked Active Missing Container -->
+        <div id="missing-active-container" class="hidden space-y-6">
+
+          <!-- User header banner -->
+          <div class="flex justify-between items-center bg-pink-50/80 p-3 rounded-xl border border-pink-100 max-w-lg mx-auto shadow-sm">
+            <span id="missing-user-label" class="text-xs font-bold text-pink-600">Viewing as: ...</span>
+            <button class="missing-reset-identity-btn text-[10px] bg-purple-200/60 hover:bg-purple-200 text-purple-950 px-2.5 py-1 rounded-md font-bold transition cursor-pointer">
+              Switch User
+            </button>
+          </div>
+
+          <!-- Relationship Status Badge -->
+          <div id="relationship-status-badge" class="inline-flex items-center space-x-2 px-4 py-1.5 bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-full text-xs font-bold shadow-sm">
+            <span>Relationship Status:</span>
+            <span id="relationship-status-text">💚 Everything is okay again</span>
+          </div>
+
+          <!-- Main Missing Counter Card -->
+          <div class="glass-card p-6 md:p-8 border border-pink-300 max-w-lg mx-auto shadow-2xl relative overflow-hidden">
+            <span id="missing-counter-title" class="text-xs uppercase tracking-widest font-bold text-pink-500">Real Number of Times Missed</span>
+            <div id="missing-main-counter" class="text-4xl md:text-6xl font-bold font-mono text-purple-950 my-3 transition-all duration-300 transform scale-100">
+              0
+            </div>
+            
+            <!-- Real breakdown stats -->
+            <div id="missing-breakdown-stats" class="text-xs text-purple-900 font-semibold bg-white/70 p-2.5 rounded-xl border border-pink-100 mb-3 flex justify-around">
+              <span>🌸 Amuu: <strong id="amuu-missed-count" class="text-pink-600 font-bold">0</strong></span>
+              <span>|</span>
+              <span>☕ Rakesh: <strong id="rakesh-missed-count" class="text-purple-700 font-bold">0</strong></span>
+            </div>
+
+            <p class="text-xs text-gray-500 italic">
+              Real value updated live when clicking '+1 I Miss You'!<br>
+              <strong class="text-pink-600 font-semibold">No fake auto-rising counter 😭❤️</strong>
+            </p>
+
+            <!-- Giant +1 Clicker Button -->
+            <div class="mt-6 pt-4 border-t border-pink-100 flex flex-col items-center">
+              <button id="missing-plus-one-btn" class="px-8 py-3.5 bg-gradient-to-r from-pink-500 via-rose-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white rounded-full font-bold shadow-lg transition transform hover:scale-105 active:scale-95 text-sm flex items-center space-x-2 cursor-pointer relative overflow-hidden">
+                <span>I Miss You +1</span>
+                <span>💗</span>
+              </button>
+              <p id="missing-btn-feedback" class="text-[11px] text-pink-600 font-semibold mt-2 min-h-[16px] italic"></p>
+            </div>
+          </div>
+
+          <!-- Missing Level Gauge Card -->
+          <div class="glass-card p-6 border border-purple-200 max-w-lg mx-auto shadow-xl text-left">
+            <div class="flex justify-between items-center mb-2">
+              <h4 class="text-xs font-bold uppercase tracking-wider text-purple-900">Current Missing Level</h4>
+              <span id="missing-level-badge" class="text-xs px-3 py-1 rounded-full font-bold bg-pink-100 text-pink-700">🥺 Missing You</span>
+            </div>
+
+            <!-- Gauge progress -->
+            <div class="w-full bg-purple-100 h-3 rounded-full overflow-hidden p-0.5 border border-purple-200">
+              <div id="missing-level-fill" class="h-full bg-gradient-to-r from-emerald-400 via-purple-500 to-rose-600 rounded-full transition-all duration-700" style="width: 50%;"></div>
+            </div>
+          </div>
+
+          <!-- Missing Statistics Grid -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 text-left max-w-2xl mx-auto">
+            <div class="glass-card p-4 border border-white/60 hover:border-pink-300 transition shadow-sm">
+              <div class="flex justify-between items-start mb-2">
+                <span class="text-2xl">📱</span>
+                <span class="text-[10px] font-bold text-pink-500 uppercase">Stat #1</span>
+              </div>
+              <h5 class="text-xs text-gray-500 font-semibold">Times I almost texted you</h5>
+              <p id="stat-val-1" class="text-lg font-bold text-purple-950 mt-1">2,341</p>
+            </div>
+
+            <div class="glass-card p-4 border border-white/60 hover:border-pink-300 transition shadow-sm">
+              <div class="flex justify-between items-start mb-2">
+                <span class="text-2xl">💭</span>
+                <span class="text-[10px] font-bold text-pink-500 uppercase">Stat #2</span>
+              </div>
+              <h5 class="text-xs text-gray-500 font-semibold">Random things reminding me of you</h5>
+              <p id="stat-val-2" class="text-lg font-bold text-purple-950 mt-1">987</p>
+            </div>
+
+            <div class="glass-card p-4 border border-white/60 hover:border-pink-300 transition shadow-sm">
+              <div class="flex justify-between items-start mb-2">
+                <span class="text-2xl">👀</span>
+                <span class="text-[10px] font-bold text-pink-500 uppercase">Stat #3</span>
+              </div>
+              <h5 class="text-xs text-gray-500 font-semibold">Times I checked if you replied</h5>
+              <p id="stat-val-3" class="text-xs font-bold text-rose-600 mt-1">Definitely too many 😭</p>
+            </div>
+
+            <div class="glass-card p-4 border border-white/60 hover:border-pink-300 transition shadow-sm">
+              <div class="flex justify-between items-start mb-2">
+                <span class="text-2xl">🎵</span>
+                <span class="text-[10px] font-bold text-pink-500 uppercase">Stat #4</span>
+              </div>
+              <h5 class="text-xs text-gray-500 font-semibold">Songs suddenly about you</h5>
+              <p id="stat-val-4" class="text-lg font-bold text-purple-950 mt-1">42</p>
+            </div>
+
+            <div class="glass-card p-4 border border-white/60 hover:border-pink-300 transition shadow-sm">
+              <div class="flex justify-between items-start mb-2">
+                <span class="text-2xl">😤</span>
+                <span class="text-[10px] font-bold text-pink-500 uppercase">Stat #5</span>
+              </div>
+              <h5 class="text-xs text-gray-500 font-semibold">Said 'I won't text first'</h5>
+              <p id="stat-val-5" class="text-lg font-bold text-purple-950 mt-1">18</p>
+            </div>
+
+            <div class="glass-card p-4 border border-white/60 hover:border-pink-300 transition shadow-sm">
+              <div class="flex justify-between items-start mb-2">
+                <span class="text-2xl">🤡</span>
+                <span class="text-[10px] font-bold text-pink-500 uppercase">Stat #6</span>
+              </div>
+              <h5 class="text-xs text-gray-500 font-semibold">Times I actually succeeded</h5>
+              <p id="stat-val-6" class="text-lg font-bold text-rose-600 mt-1">0 💀</p>
+            </div>
+          </div>
+
+          <!-- "Why I Miss You?" Generator Card -->
+          <div class="glass-card p-6 border border-pink-200 max-w-lg mx-auto shadow-xl text-center space-y-4">
+            <span class="text-3xl">✨💡</span>
+            <h4 class="text-base font-fancy font-bold text-purple-950">"Why do you miss me?" Generator</h4>
+            
+            <div id="missing-reason-box" class="bg-white/80 p-4 rounded-2xl border border-pink-100 min-h-[70px] flex items-center justify-center text-xs md:text-sm text-purple-900 font-medium italic">
+              Click the button below to generate a reason! 👇
+            </div>
+
+            <button id="generate-reason-btn" class="px-6 py-2.5 bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-700 hover:to-pink-600 text-white rounded-full font-bold text-xs shadow transition active:scale-95 cursor-pointer">
+              Why do you miss me? 👀
+            </button>
+          </div>
+
+          <!-- Time Since Last Conversation Timer -->
+          <div class="glass-card p-6 border border-purple-200 max-w-lg mx-auto shadow-xl text-center space-y-2">
+            <span class="text-xs uppercase tracking-widest font-bold text-purple-600">Time Since Last Conversation</span>
+            <div id="last-convo-timer" class="text-2xl md:text-3xl font-mono font-bold text-purple-950 my-1">
+              00d 00h 00m 00s
+            </div>
+            <p class="text-[11px] text-gray-400 italic">
+              Yes, apparently I made a counter for this.<br>
+              <strong class="text-pink-600 font-semibold">Don't judge me 😭❤️</strong>
+            </p>
+          </div>
+
+        </div>
+
+      </div>
+    </section>
+
     <!-- 📖 Memory Lane Timeline Page -->
     <section id="section-timeline" class="hidden transition-all duration-300 opacity-0 scale-95">
       <div class="text-center max-w-2xl mx-auto">
@@ -542,10 +962,69 @@
   </div>
 
   <!-- =================================================================
+     ⚡ NEW COMPLAINT FORM MODAL
+     ================================================================= -->
+  <div id="new-complaint-modal" class="hidden fixed inset-0 w-full h-full bg-black/60 backdrop-blur-sm z-50 justify-center items-center p-4 transition-all duration-300">
+    <div class="glass-card max-w-md w-full p-6 border border-white/60 shadow-2xl relative flex flex-col animate-scale-up text-left">
+      <button id="close-complaint-modal-btn" class="absolute top-4 right-4 text-gray-400 hover:text-pink-500 font-bold text-xl p-1.5 focus:outline-none transition cursor-pointer" aria-label="Close Modal">✕</button>
+      
+      <div class="flex items-center space-x-2 mb-4 pb-2 border-b border-pink-100">
+        <span class="text-2xl">⚡</span>
+        <div>
+          <h3 class="text-base font-bold text-purple-950">File a Complaint</h3>
+          <p class="text-[10px] text-gray-500">Express your grievance so we can fix it & laugh together</p>
+        </div>
+      </div>
+
+      <form id="new-complaint-form" class="space-y-4">
+        <div>
+          <label class="block text-xs font-bold text-purple-900 mb-1">What's bothering you? 🗣️</label>
+          <textarea id="complaint-text-input" rows="3" required placeholder="e.g. You promised to call back in 5 minutes but forgot..." class="w-full p-3 text-xs rounded-xl border border-pink-200 focus:outline-none focus:border-pink-400 bg-white/80 resize-none font-sans"></textarea>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-purple-900 mb-1">Select Mood / Category 🏷️</label>
+          <div id="complaint-category-selector" class="grid grid-cols-2 gap-2">
+            <button type="button" data-cat="silly" class="complaint-cat-btn active py-2 px-3 text-xs rounded-xl font-semibold border transition text-center bg-amber-100 text-amber-900 border-amber-300">Silly 😜</button>
+            <button type="button" data-cat="peeve" class="complaint-cat-btn py-2 px-3 text-xs rounded-xl font-semibold border transition text-center bg-white/70 text-gray-600 border-gray-200 hover:bg-indigo-50">Pet Peeve 🍕</button>
+            <button type="button" data-cat="annoyed" class="complaint-cat-btn py-2 px-3 text-xs rounded-xl font-semibold border transition text-center bg-white/70 text-gray-600 border-gray-200 hover:bg-rose-50">Mild Annoyance 😤</button>
+            <button type="button" data-cat="sweet" class="complaint-cat-btn py-2 px-3 text-xs rounded-xl font-semibold border transition text-center bg-white/70 text-gray-600 border-gray-200 hover:bg-pink-50">Sweet Complaint 🥺</button>
+          </div>
+        </div>
+
+        <div class="pt-2 flex justify-end space-x-2">
+          <button type="button" id="cancel-complaint-btn" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-full text-xs font-bold transition cursor-pointer">Cancel</button>
+          <button type="submit" class="px-5 py-2 bg-gradient-to-r from-rose-500 to-pink-500 hover:from-rose-600 hover:to-pink-600 text-white rounded-full text-xs font-bold shadow-md transition active:scale-95 cursor-pointer">Submit Complaint 🚀</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- =================================================================
+     ✨ HIDDEN FINAL SURPRISE MODAL
+     ================================================================= -->
+  <div id="final-surprise-modal" class="hidden fixed inset-0 w-full h-full bg-black/80 backdrop-blur-md z-50 justify-center items-center p-4 transition-all duration-500">
+    <div class="glass-card max-w-md w-full p-8 border border-pink-300 shadow-2xl relative flex flex-col items-center text-center animate-scale-up space-y-4">
+      <button id="close-final-surprise-btn" class="absolute top-4 right-4 text-gray-400 hover:text-pink-500 font-bold text-xl p-1.5 focus:outline-none transition cursor-pointer" aria-label="Close Modal">✕</button>
+      
+      <div class="text-6xl animate-bounce">✨💖✨</div>
+      <h3 id="final-surprise-title" class="font-fancy font-bold text-2xl text-pink-600">The Simple Truth ❤️</h3>
+      
+      <div id="final-surprise-text-body" class="text-xs md:text-sm text-purple-950 font-sans leading-relaxed space-y-2 min-h-[140px] flex flex-col justify-center italic bg-white/60 p-4 rounded-2xl border border-pink-100">
+        <!-- JS Types text lines -->
+      </div>
+
+      <button id="final-surprise-ok-btn" class="px-8 py-3 bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-600 hover:to-purple-700 text-white rounded-full font-bold text-xs shadow-lg transition active:scale-95 cursor-pointer">
+        Love this ❤️
+      </button>
+    </div>
+  </div>
+
+  <!-- =================================================================
      🧭 FLOATING BOTTOM NAVIGATION BAR
      ================================================================= -->
   <nav id="floating-nav" class="hidden fixed bottom-3 left-1/2 transform -translate-x-1/2 z-30 w-[94%] max-w-xl glass-nav rounded-2xl shadow-xl border border-white/50 px-2 py-1.5 flex items-center overflow-x-auto scrollbar-none opacity-0 transition-opacity duration-500">
-    <div class="flex space-x-1 w-full justify-between min-w-[480px] sm:min-w-0">
+    <div class="flex space-x-1 w-full justify-between min-w-[560px] sm:min-w-0">
       <button data-nav-target="message" class="flex-1 py-2 px-1.5 rounded-xl flex flex-col items-center transition focus:outline-none text-pink-600 font-bold scale-105 active:scale-95 text-center">
         <span class="text-lg mb-0.5">💌</span>
         <span class="text-[9px] tracking-tight uppercase">Message</span>
@@ -558,9 +1037,18 @@
         <span class="text-lg mb-0.5">🔐</span>
         <span class="text-[9px] tracking-tight uppercase">Secret</span>
       </button>
-      <button data-nav-target="chat" class="flex-1 py-2 px-1.5 rounded-xl flex flex-col items-center transition focus:outline-none text-gray-500 active:scale-95 text-center">
+      <button data-nav-target="chat" class="flex-1 py-2 px-1.5 rounded-xl flex flex-col items-center transition focus:outline-none text-gray-500 active:scale-95 text-center relative">
         <span class="text-lg mb-0.5">💬</span>
         <span class="text-[9px] tracking-tight uppercase">Chat</span>
+        <span id="chat-nav-badge" class="hidden absolute top-1 right-2 bg-rose-500 text-white text-[9px] w-4 h-4 rounded-full font-bold flex items-center justify-center animate-bounce shadow">0</span>
+      </button>
+      <button data-nav-target="apology" class="flex-1 py-2 px-1.5 rounded-xl flex flex-col items-center transition focus:outline-none text-gray-500 active:scale-95 text-center">
+        <span class="text-lg mb-0.5">🥺</span>
+        <span class="text-[9px] tracking-tight uppercase">Apology</span>
+      </button>
+      <button data-nav-target="missing" class="flex-1 py-2 px-1.5 rounded-xl flex flex-col items-center transition focus:outline-none text-gray-500 active:scale-95 text-center">
+        <span class="text-lg mb-0.5">💗</span>
+        <span class="text-[9px] tracking-tight uppercase">Missing</span>
       </button>
       <button data-nav-target="quiz" class="flex-1 py-2 px-1.5 rounded-xl flex flex-col items-center transition focus:outline-none text-gray-500 active:scale-95 text-center">
         <span class="text-lg mb-0.5">🧩</span>

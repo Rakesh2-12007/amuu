@@ -71,7 +71,42 @@ document.addEventListener("DOMContentLoaded", () => {
     chat: {
       currentUser: localStorage.getItem("romantic_chat_user") || null,
       messages: [],
-      eventSource: null
+      complaints: [],
+      activeSubTab: "chat",
+      complaintFilter: "all",
+      selectedCategory: "silly",
+      unreadCount: 0,
+      eventSource: null,
+      popupTimer: null
+    },
+    apology: {
+      dialogueIndex: 0,
+      letterOpened: false,
+      angryAttempts: 0,
+      forgivenessPercentage: 0,
+      puzzlePieces: [1, 2, 3, 4],
+      selectedPieceIdx: null,
+      puzzleSolved: false,
+      completed: false
+    },
+    missing: {
+      count: parseInt(localStorage.getItem("romantic_real_missing_count") || "12847", 10),
+      amuuCount: parseInt(localStorage.getItem("romantic_missing_count_Amuu") || "6423", 10),
+      rakeshCount: parseInt(localStorage.getItem("romantic_missing_count_Rakesh") || "6424", 10),
+      usedReasons: [],
+      timerInterval: null,
+      lastConvoInterval: null
+    },
+    notifications: {
+      storyTimer: null,
+      lastPromptIndex: 0
+    },
+    achievements: {
+      apologyDelivered: false,
+      is100Forgiven: false,
+      missingVisited: false,
+      gamePlayed: false,
+      finalUnlocked: false
     },
     easterEggs: {
       starClicks: 0,
@@ -379,6 +414,10 @@ document.addEventListener("DOMContentLoaded", () => {
         resetSurprise();
       } else if (sectionId === "midnight") {
         initMidnightCorner();
+      } else if (sectionId === "apology") {
+        initApologySection();
+      } else if (sectionId === "missing") {
+        initMissingDashboard();
       }
 
       // Always unlock body scroll when changing sections
@@ -1240,6 +1279,9 @@ document.addEventListener("DOMContentLoaded", () => {
       state.secretRoomUnlocked = true;
       triggerConfetti();
       startTerminalSequence();
+      initChatRoom();
+      initApologySection();
+      initMissingDashboard();
     } else {
       // Shakes passcode box
       const passcodeBox = document.getElementById("passcode-container");
@@ -1960,20 +2002,26 @@ document.addEventListener("DOMContentLoaded", () => {
   console.log(getConfigValue(["easterEggs", "devNote"], "Custom coded for a special one. 💗"));
 
   /* =================================================================
-     💬 PRIVATE REAL-TIME CHAT SYSTEM 💬
+     💬 PRIVATE REAL-TIME CHAT & COMPLAINT BOX SYSTEM 💬
      ================================================================= */
 
   function initChatRoom() {
     const lockPrompt = document.getElementById("chat-lock-prompt");
     const identityScreen = document.getElementById("chat-identity-screen");
+    const activeContainer = document.getElementById("chat-active-container");
     const roomInterface = document.getElementById("chat-room-interface");
+    const complaintsInterface = document.getElementById("chat-complaints-interface");
 
-    if (!lockPrompt || !identityScreen || !roomInterface) return;
+    if (!lockPrompt || !identityScreen || !activeContainer) return;
+
+    // Reset unread count when opening chat
+    state.chat.unreadCount = 0;
+    updateNavBadges();
 
     if (!state.secretRoomUnlocked) {
       lockPrompt.classList.remove("hidden");
       identityScreen.classList.add("hidden");
-      roomInterface.classList.add("hidden");
+      activeContainer.classList.add("hidden");
       return;
     }
 
@@ -1981,11 +2029,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
     if (!state.chat.currentUser) {
       identityScreen.classList.remove("hidden");
-      roomInterface.classList.add("hidden");
-      setupChatIdentityListeners();
+      activeContainer.classList.add("hidden");
+      setupGlobalIdentityListeners();
     } else {
       identityScreen.classList.add("hidden");
-      roomInterface.classList.remove("hidden");
+      activeContainer.classList.remove("hidden");
+      setupGlobalIdentityListeners();
       
       // Update header label
       const userLabel = document.getElementById("chat-user-label");
@@ -1994,7 +2043,10 @@ document.addEventListener("DOMContentLoaded", () => {
         userLabel.innerText = `Chatting as: ${state.chat.currentUser} ${isAmuu ? '🌸' : '☕'}`;
       }
 
-      // Load history
+      // Setup Sub-navigation Tabs
+      setupChatSubTabs();
+
+      // Load Chat history
       const saved = localStorage.getItem("romantic_chat_history");
       if (saved) {
         try {
@@ -2003,32 +2055,423 @@ document.addEventListener("DOMContentLoaded", () => {
           state.chat.messages = [];
         }
       }
-      
+
+      // Load Complaints history
+      initComplaints();
+
       renderChatMessages();
       connectRealTimeChat();
       setupChatRoomListeners();
+      setupComplaintModalListeners();
+      setupNotificationPopupListeners();
     }
   }
 
-  function setupChatIdentityListeners() {
-    if (state.chat.identityListenersBound) return;
-    state.chat.identityListenersBound = true;
+  function setupChatSubTabs() {
+    const btnChat = document.getElementById("chat-tab-btn-chat");
+    const btnComplaints = document.getElementById("chat-tab-btn-complaints");
+    const roomInterface = document.getElementById("chat-room-interface");
+    const complaintsInterface = document.getElementById("chat-complaints-interface");
 
-    const amuuBtn = document.getElementById("identity-amuu-btn");
-    const rakeshBtn = document.getElementById("identity-rakesh-btn");
+    if (state.chat.subTabsBound) return;
+    state.chat.subTabsBound = true;
 
-    amuuBtn?.addEventListener("click", () => {
-      state.chat.currentUser = "Amuu";
-      localStorage.setItem("romantic_chat_user", "Amuu");
-      initChatRoom();
+    btnChat?.addEventListener("click", () => {
+      state.chat.activeSubTab = "chat";
+      btnChat.className = "flex-1 py-2 px-3 rounded-xl font-bold text-xs shadow-sm transition-all flex items-center justify-center space-x-1.5 bg-gradient-to-r from-pink-500 to-purple-600 text-white cursor-pointer active:scale-95";
+      btnComplaints.className = "flex-1 py-2 px-3 rounded-xl font-bold text-xs shadow-sm transition-all flex items-center justify-center space-x-1.5 bg-white/70 hover:bg-white text-purple-950 border border-pink-100 cursor-pointer active:scale-95 relative";
+      roomInterface?.classList.remove("hidden");
+      complaintsInterface?.classList.add("hidden");
       playTickSound();
     });
 
-    rakeshBtn?.addEventListener("click", () => {
-      state.chat.currentUser = "Rakesh";
-      localStorage.setItem("romantic_chat_user", "Rakesh");
-      initChatRoom();
+    btnComplaints?.addEventListener("click", () => {
+      state.chat.activeSubTab = "complaints";
+      btnComplaints.className = "flex-1 py-2 px-3 rounded-xl font-bold text-xs shadow-sm transition-all flex items-center justify-center space-x-1.5 bg-gradient-to-r from-pink-500 to-purple-600 text-white cursor-pointer active:scale-95 relative";
+      btnChat.className = "flex-1 py-2 px-3 rounded-xl font-bold text-xs shadow-sm transition-all flex items-center justify-center space-x-1.5 bg-white/70 hover:bg-white text-purple-950 border border-pink-100 cursor-pointer active:scale-95";
+      complaintsInterface?.classList.remove("hidden");
+      roomInterface?.classList.add("hidden");
+      renderComplaintsList();
       playTickSound();
+    });
+  }
+
+  /* =================================================================
+     ⚡ COMPLAINT BOX MANAGEMENT ⚡
+     ================================================================= */
+
+  function initComplaints() {
+    const savedComplaints = localStorage.getItem("romantic_complaints_history");
+    if (savedComplaints) {
+      try {
+        state.chat.complaints = JSON.parse(savedComplaints);
+      } catch(e) {
+        state.chat.complaints = getConfigValue(["chat", "sampleComplaints"], []);
+      }
+    } else {
+      state.chat.complaints = getConfigValue(["chat", "sampleComplaints"], []);
+      localStorage.setItem("romantic_complaints_history", JSON.stringify(state.chat.complaints));
+    }
+    renderComplaintsList();
+    updateNavBadges();
+  }
+
+  function renderComplaintsList() {
+    const container = document.getElementById("complaints-list-container");
+    if (!container) return;
+
+    container.innerHTML = "";
+    const filter = state.chat.complaintFilter;
+
+    let filtered = state.chat.complaints.filter(c => {
+      if (filter === "pending") return !c.resolved;
+      if (filter === "resolved") return c.resolved;
+      return true;
+    });
+
+    // Sort by newest first
+    filtered.sort((a, b) => b.time - a.time);
+
+    if (filtered.length === 0) {
+      container.innerHTML = `
+        <div class="text-center my-auto p-6 text-gray-400 italic text-xs">
+          <p class="text-3xl mb-2">✨🕊️✨</p>
+          <p>No complaints found here!</p>
+          <p class="mt-1 text-[10px]">Everything is peaceful between you two. ❤️</p>
+        </div>
+      `;
+      return;
+    }
+
+    const categories = getConfigValue(["chat", "categories"], []);
+
+    filtered.forEach(c => {
+      const catObj = categories.find(cat => cat.id === c.category) || { label: c.category || "Grievance", bg: "bg-gray-100 text-gray-700" };
+      const date = new Date(c.time);
+      const timeStr = date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: false }) + ' • ' + date.toLocaleDateString([], { month: 'short', day: 'numeric' });
+      const isSelf = c.sender === state.chat.currentUser;
+
+      const card = document.createElement("div");
+      card.className = `complaint-card p-3.5 rounded-2xl glass-card border text-xs relative flex flex-col justify-between ${c.resolved ? 'resolved' : 'bg-white/80 border-pink-200 shadow-sm'}`;
+
+      card.innerHTML = `
+        <div>
+          <div class="flex justify-between items-center mb-2">
+            <div class="flex items-center space-x-1.5">
+              <span class="font-bold ${isSelf ? 'text-pink-600' : 'text-purple-700'}">${c.sender} ${c.sender === 'Amuu' ? '🌸' : '☕'}</span>
+              <span class="text-[9px] px-2 py-0.5 rounded-full border font-bold ${catObj.bg}">${catObj.label}</span>
+            </div>
+            <span class="text-[9px] text-gray-400 font-medium">${timeStr}</span>
+          </div>
+          <p class="text-purple-950 font-medium leading-relaxed mb-3 font-sans break-words">${escapeHTML(c.text)}</p>
+        </div>
+        <div class="flex justify-between items-center pt-2 border-t border-pink-100/60 mt-1">
+          <span class="text-[10px] font-bold ${c.resolved ? 'text-emerald-600 flex items-center space-x-1' : 'text-amber-600 flex items-center space-x-1'}">
+            <span>${c.resolved ? '✅ Resolved & Forgiven' : '⏳ Pending Resolution'}</span>
+          </span>
+          <button data-resolve-id="${c.id}" class="px-3 py-1 rounded-full text-[10px] font-bold transition active:scale-95 cursor-pointer ${c.resolved ? 'bg-gray-100 hover:bg-gray-200 text-gray-600' : 'bg-gradient-to-r from-pink-500 to-rose-500 hover:from-pink-600 hover:to-rose-600 text-white shadow'}">
+            ${c.resolved ? 'Undo Resolution' : 'Resolve & Forgive ❤️'}
+          </button>
+        </div>
+      `;
+
+      card.querySelector(`[data-resolve-id="${c.id}"]`)?.addEventListener("click", () => {
+        toggleComplaintResolution(c.id);
+      });
+
+      container.appendChild(card);
+    });
+  }
+
+  function toggleComplaintResolution(id) {
+    const item = state.chat.complaints.find(c => c.id === id);
+    if (!item) return;
+
+    item.resolved = !item.resolved;
+    localStorage.setItem("romantic_complaints_history", JSON.stringify(state.chat.complaints));
+    
+    if (item.resolved) {
+      triggerConfetti();
+      playTickSound();
+    } else {
+      playTickSound();
+    }
+
+    // Broadcast updated complaint state
+    const topic = getConfigValue(["chat", "topic"], "amuu_rakesh_love_chat_2026_xyz");
+    const payload = {
+      type: "complaint_update",
+      id: item.id,
+      resolved: item.resolved,
+      sender: state.chat.currentUser,
+      time: Date.now()
+    };
+
+    fetch(`https://ntfy.sh/${topic}`, {
+      method: "POST",
+      body: JSON.stringify(payload)
+    }).catch(e => {});
+
+    renderComplaintsList();
+    updateNavBadges();
+  }
+
+  function setupComplaintModalListeners() {
+    if (state.chat.modalListenersBound) return;
+    state.chat.modalListenersBound = true;
+
+    const modal = document.getElementById("new-complaint-modal");
+    const openBtn = document.getElementById("open-complaint-modal-btn");
+    const closeBtn = document.getElementById("close-complaint-modal-btn");
+    const cancelBtn = document.getElementById("cancel-complaint-btn");
+    const form = document.getElementById("new-complaint-form");
+    const input = document.getElementById("complaint-text-input");
+    const catSelector = document.getElementById("complaint-category-selector");
+
+    openBtn?.addEventListener("click", () => {
+      modal?.classList.remove("hidden");
+      modal?.classList.add("flex");
+      input.value = "";
+      playTickSound();
+    });
+
+    const closeModal = () => {
+      modal?.classList.add("hidden");
+      modal?.classList.remove("flex");
+    };
+
+    closeBtn?.addEventListener("click", closeModal);
+    cancelBtn?.addEventListener("click", closeModal);
+
+    // Filter Chips
+    document.querySelectorAll(".complaint-filter-chip").forEach(chip => {
+      chip.addEventListener("click", () => {
+        document.querySelectorAll(".complaint-filter-chip").forEach(c => {
+          c.classList.remove("active", "bg-pink-500", "text-white", "font-bold");
+          c.classList.add("bg-white/80", "text-gray-600", "font-semibold");
+        });
+        chip.classList.add("active", "bg-pink-500", "text-white", "font-bold");
+        chip.classList.remove("bg-white/80", "text-gray-600", "font-semibold");
+        
+        state.chat.complaintFilter = chip.getAttribute("data-complaint-filter") || "all";
+        renderComplaintsList();
+        playTickSound();
+      });
+    });
+
+    // Category button selection in modal
+    catSelector?.querySelectorAll(".complaint-cat-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        catSelector.querySelectorAll(".complaint-cat-btn").forEach(b => {
+          b.className = "complaint-cat-btn py-2 px-3 text-xs rounded-xl font-semibold border transition text-center bg-white/70 text-gray-600 border-gray-200 hover:bg-pink-50";
+        });
+
+        const cat = btn.getAttribute("data-cat");
+        state.chat.selectedCategory = cat;
+
+        const bgMap = {
+          silly: "bg-amber-100 text-amber-900 border-amber-300",
+          peeve: "bg-indigo-100 text-indigo-900 border-indigo-300",
+          annoyed: "bg-rose-100 text-rose-900 border-rose-300",
+          sweet: "bg-pink-100 text-pink-900 border-pink-300"
+        };
+        btn.className = `complaint-cat-btn active py-2 px-3 text-xs rounded-xl font-semibold border transition text-center ${bgMap[cat] || 'bg-pink-100'}`;
+        playTickSound();
+      });
+    });
+
+    // Submit complaint
+    form?.addEventListener("submit", (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+
+      const payload = {
+        type: "complaint",
+        id: "c_" + Math.random().toString(36).substr(2, 9),
+        sender: state.chat.currentUser || "Amuu",
+        text: text,
+        category: state.chat.selectedCategory || "silly",
+        time: Date.now(),
+        resolved: false
+      };
+
+      // Add locally
+      state.chat.complaints.push(payload);
+      localStorage.setItem("romantic_complaints_history", JSON.stringify(state.chat.complaints));
+
+      // Sync real-time via ntfy.sh
+      const topic = getConfigValue(["chat", "topic"], "amuu_rakesh_love_chat_2026_xyz");
+      fetch(`https://ntfy.sh/${topic}`, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      }).catch(err => console.error("Error sending complaint payload:", err));
+
+      closeModal();
+      renderComplaintsList();
+      updateNavBadges();
+      triggerConfetti();
+      playTickSound();
+    });
+  }
+
+  /* =================================================================
+     🔔 POPUP NOTIFICATION INTERFACE & BADGES 🔔
+     ================================================================= */
+
+  function showChatPopupNotification({ sender, text, type = "chat", target = "chat", time = Date.now() }) {
+    const popup = document.getElementById("chat-popup-notification");
+    const nameEl = document.getElementById("popup-sender-name");
+    const textEl = document.getElementById("popup-message-text");
+    const avatarEl = document.getElementById("popup-avatar-icon");
+    const timeEl = document.getElementById("popup-time");
+
+    if (!popup) return;
+
+    if (state.chat.popupTimer) clearTimeout(state.chat.popupTimer);
+
+    popup.dataset.target = target;
+
+    const isComplaint = type === "complaint";
+    const isStory = type === "story";
+    const senderIcon = sender === "Amuu" ? "🌸" : (sender === "Rakesh" ? "☕" : "✨");
+
+    if (avatarEl) avatarEl.innerText = isStory ? (sender.split(" ")[0] || "✨") : (isComplaint ? "⚡" : "💬");
+    if (nameEl) nameEl.innerText = isStory ? sender : `${sender} ${senderIcon} ${isComplaint ? 'filed a complaint' : 'sent a message'}`;
+    if (textEl) textEl.innerText = text;
+    if (timeEl) timeEl.innerText = "Just now";
+
+    popup.classList.remove("hidden");
+    setTimeout(() => {
+      popup.classList.add("show");
+    }, 20);
+
+    playTickSound();
+
+    // Auto dismiss after 6 seconds
+    state.chat.popupTimer = setTimeout(() => {
+      dismissChatPopup();
+    }, 6000);
+  }
+
+  function dismissChatPopup() {
+    const popup = document.getElementById("chat-popup-notification");
+    if (!popup) return;
+    popup.classList.remove("show");
+    setTimeout(() => {
+      popup.classList.add("hidden");
+    }, 300);
+  }
+
+  function setupNotificationPopupListeners() {
+    if (state.chat.popupListenersBound) return;
+    state.chat.popupListenersBound = true;
+
+    const popup = document.getElementById("chat-popup-notification");
+    const actionBtn = document.getElementById("popup-action-btn");
+    const dismissBtn = document.getElementById("popup-dismiss-btn");
+    const closeX = document.getElementById("popup-close-x");
+    const testBtn = document.getElementById("chat-test-notify-btn");
+
+    const handleAction = (e) => {
+      e?.stopPropagation();
+      dismissChatPopup();
+      const target = popup?.dataset?.target || "chat";
+      if (target === "final_surprise") {
+        openFinalSurpriseModal();
+      } else {
+        showSection(target);
+      }
+    };
+
+    // Clicking anywhere on the popup banner opens the target section
+    popup?.addEventListener("click", (e) => {
+      if (e.target.closest("#popup-dismiss-btn") || e.target.closest("#popup-close-x")) return;
+      handleAction(e);
+    });
+
+    actionBtn?.addEventListener("click", handleAction);
+
+    dismissBtn?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      dismissChatPopup();
+    });
+
+    closeX?.addEventListener("click", (e) => {
+      e.stopPropagation();
+      dismissChatPopup();
+    });
+
+    testBtn?.addEventListener("click", () => {
+      const otherUser = state.chat.currentUser === "Amuu" ? "Rakesh" : "Amuu";
+      showChatPopupNotification({
+        sender: otherUser,
+        text: "Hey! Testing the live popup notification interface! 💬✨",
+        type: "chat",
+        target: "chat"
+      });
+    });
+  }
+
+  function updateNavBadges() {
+    const pendingComplaints = state.chat.complaints.filter(c => !c.resolved).length;
+    const pendingBadge = document.getElementById("complaints-pending-badge");
+    const navBadge = document.getElementById("chat-nav-badge");
+
+    if (pendingBadge) {
+      pendingBadge.innerText = pendingComplaints;
+      pendingBadge.classList.toggle("hidden", pendingComplaints === 0);
+    }
+
+    if (navBadge) {
+      const totalUnread = state.chat.unreadCount + (state.currentPage === "chat" ? 0 : pendingComplaints);
+      navBadge.innerText = totalUnread;
+      navBadge.classList.toggle("hidden", totalUnread === 0);
+    }
+  }
+
+  function setupGlobalIdentityListeners() {
+    if (state.chat.identityListenersBound) return;
+    state.chat.identityListenersBound = true;
+
+    const selectUser = (user) => {
+      state.chat.currentUser = user;
+      localStorage.setItem("romantic_chat_user", user);
+      initChatRoom();
+      initApologySection();
+      initMissingDashboard();
+      playTickSound();
+    };
+
+    const resetUser = () => {
+      if (state.chat.eventSource) {
+        state.chat.eventSource.close();
+        state.chat.eventSource = null;
+      }
+      state.chat.currentUser = null;
+      localStorage.removeItem("romantic_chat_user");
+      initChatRoom();
+      initApologySection();
+      initMissingDashboard();
+      playTickSound();
+    };
+
+    document.getElementById("identity-amuu-btn")?.addEventListener("click", () => selectUser("Amuu"));
+    document.getElementById("identity-rakesh-btn")?.addEventListener("click", () => selectUser("Rakesh"));
+
+    document.querySelectorAll(".select-identity-amuu-btn").forEach(btn => {
+      btn.addEventListener("click", () => selectUser("Amuu"));
+    });
+    document.querySelectorAll(".select-identity-rakesh-btn").forEach(btn => {
+      btn.addEventListener("click", () => selectUser("Rakesh"));
+    });
+
+    document.getElementById("chat-reset-identity-btn")?.addEventListener("click", resetUser);
+    document.querySelectorAll(".apology-reset-identity-btn").forEach(btn => {
+      btn.addEventListener("click", resetUser);
+    });
+    document.querySelectorAll(".missing-reset-identity-btn").forEach(btn => {
+      btn.addEventListener("click", resetUser);
     });
   }
 
@@ -2047,6 +2490,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       const topic = getConfigValue(["chat", "topic"], "amuu_rakesh_love_chat_2026_xyz");
       const payload = {
+        type: "chat",
         id: Math.random().toString(36).substr(2, 9),
         sender: state.chat.currentUser,
         text: text,
@@ -2113,7 +2557,9 @@ document.addEventListener("DOMContentLoaded", () => {
       .then(res => res.text())
       .then(text => {
         const lines = text.trim().split("\n");
-        let hasNew = false;
+        let hasNewMsgs = false;
+        let hasNewComplaints = false;
+
         lines.forEach(line => {
           if (!line) return;
           try {
@@ -2121,20 +2567,54 @@ document.addEventListener("DOMContentLoaded", () => {
             if (data.event === "message") {
               const payload = JSON.parse(data.message);
               if (payload && payload.id) {
-                const exists = state.chat.messages.some(m => m.id === payload.id);
-                if (!exists) {
-                  state.chat.messages.push(payload);
-                  hasNew = true;
+                if (payload.type === "complaint") {
+                  const exists = state.chat.complaints.some(c => c.id === payload.id);
+                  if (!exists) {
+                    state.chat.complaints.push(payload);
+                    hasNewComplaints = true;
+                  }
+                } else if (payload.type === "complaint_update") {
+                  const existing = state.chat.complaints.find(c => c.id === payload.id);
+                  if (existing) {
+                    existing.resolved = payload.resolved;
+                    hasNewComplaints = true;
+                  }
+                } else if (payload.type === "missing_click") {
+                  if (payload.totalCount && payload.totalCount > state.missing.count) {
+                    state.missing.count = payload.totalCount;
+                    localStorage.setItem("romantic_real_missing_count", state.missing.count);
+                  }
+                  if (payload.amuuCount && payload.amuuCount > state.missing.amuuCount) {
+                    state.missing.amuuCount = payload.amuuCount;
+                    localStorage.setItem("romantic_missing_count_Amuu", state.missing.amuuCount);
+                  }
+                  if (payload.rakeshCount && payload.rakeshCount > state.missing.rakeshCount) {
+                    state.missing.rakeshCount = payload.rakeshCount;
+                    localStorage.setItem("romantic_missing_count_Rakesh", state.missing.rakeshCount);
+                  }
+                  renderMissingCountersUI();
+                  updateMissingLevelGauge();
+                } else {
+                  const exists = state.chat.messages.some(m => m.id === payload.id);
+                  if (!exists) {
+                    state.chat.messages.push(payload);
+                    hasNewMsgs = true;
+                  }
                 }
               }
             }
           } catch(e) {}
         });
 
-        if (hasNew) {
+        if (hasNewMsgs) {
           state.chat.messages.sort((a, b) => a.time - b.time);
           localStorage.setItem("romantic_chat_history", JSON.stringify(state.chat.messages));
           renderChatMessages();
+        }
+        if (hasNewComplaints) {
+          localStorage.setItem("romantic_complaints_history", JSON.stringify(state.chat.complaints));
+          renderComplaintsList();
+          updateNavBadges();
         }
       })
       .catch(err => console.error("Error polling chat history:", err));
@@ -2150,15 +2630,70 @@ document.addEventListener("DOMContentLoaded", () => {
           if (data.event === "message") {
             const payload = JSON.parse(data.message);
             if (payload && payload.id) {
-              const exists = state.chat.messages.some(m => m.id === payload.id);
-              if (!exists) {
-                state.chat.messages.push(payload);
-                localStorage.setItem("romantic_chat_history", JSON.stringify(state.chat.messages));
-                renderChatMessages();
-                
-                // Play notification sound
+              if (payload.type === "complaint") {
+                const exists = state.chat.complaints.some(c => c.id === payload.id);
+                if (!exists) {
+                  state.chat.complaints.push(payload);
+                  localStorage.setItem("romantic_complaints_history", JSON.stringify(state.chat.complaints));
+                  renderComplaintsList();
+                  updateNavBadges();
+
+                  if (payload.sender !== state.chat.currentUser) {
+                    state.chat.unreadCount++;
+                    showChatPopupNotification({
+                      sender: payload.sender,
+                      text: payload.text,
+                      type: "complaint"
+                    });
+                  }
+                }
+              } else if (payload.type === "complaint_update") {
+                const existing = state.chat.complaints.find(c => c.id === payload.id);
+                if (existing) {
+                  existing.resolved = payload.resolved;
+                  localStorage.setItem("romantic_complaints_history", JSON.stringify(state.chat.complaints));
+                  renderComplaintsList();
+                  updateNavBadges();
+                }
+              } else if (payload.type === "missing_click") {
+                if (payload.totalCount && payload.totalCount > state.missing.count) {
+                  state.missing.count = payload.totalCount;
+                  localStorage.setItem("romantic_real_missing_count", state.missing.count);
+                }
+                if (payload.amuuCount && payload.amuuCount > state.missing.amuuCount) {
+                  state.missing.amuuCount = payload.amuuCount;
+                  localStorage.setItem("romantic_missing_count_Amuu", state.missing.amuuCount);
+                }
+                if (payload.rakeshCount && payload.rakeshCount > state.missing.rakeshCount) {
+                  state.missing.rakeshCount = payload.rakeshCount;
+                  localStorage.setItem("romantic_missing_count_Rakesh", state.missing.rakeshCount);
+                }
+                renderMissingCountersUI();
+                updateMissingLevelGauge();
+
                 if (payload.sender !== state.chat.currentUser) {
-                  playTickSound();
+                  showChatPopupNotification({
+                    sender: `${payload.sender} 💗`,
+                    text: `Pressed "+1 I Miss You"! Missing count is now ${state.missing.count.toLocaleString()}`,
+                    type: "story",
+                    target: "missing"
+                  });
+                }
+              } else {
+                const exists = state.chat.messages.some(m => m.id === payload.id);
+                if (!exists) {
+                  state.chat.messages.push(payload);
+                  localStorage.setItem("romantic_chat_history", JSON.stringify(state.chat.messages));
+                  renderChatMessages();
+                  
+                  if (payload.sender !== state.chat.currentUser) {
+                    state.chat.unreadCount++;
+                    showChatPopupNotification({
+                      sender: payload.sender,
+                      text: payload.text,
+                      type: "chat"
+                    });
+                  }
                 }
               }
             }
@@ -2232,6 +2767,615 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   /* =================================================================
+     🥺 CUTE APOLOGY SECTION LOGIC 🥺
+     ================================================================= */
+
+  function initApologySection() {
+    const lockPrompt = document.getElementById("apology-lock-prompt");
+    const identityScreen = document.getElementById("apology-identity-screen");
+    const activeContainer = document.getElementById("apology-active-container");
+
+    if (!lockPrompt || !identityScreen || !activeContainer) return;
+
+    if (!state.secretRoomUnlocked) {
+      lockPrompt.classList.remove("hidden");
+      identityScreen.classList.add("hidden");
+      activeContainer.classList.add("hidden");
+      return;
+    }
+
+    lockPrompt.classList.add("hidden");
+
+    if (!state.chat.currentUser) {
+      identityScreen.classList.remove("hidden");
+      activeContainer.classList.add("hidden");
+      setupGlobalIdentityListeners();
+    } else {
+      identityScreen.classList.add("hidden");
+      activeContainer.classList.remove("hidden");
+
+      const userLabel = document.getElementById("apology-user-label");
+      if (userLabel) {
+        const isAmuu = state.chat.currentUser === "Amuu";
+        userLabel.innerText = `Viewing as: ${state.chat.currentUser} ${isAmuu ? '🌸' : '☕'}`;
+      }
+
+      setupGlobalIdentityListeners();
+      setupApologyDialogue();
+      setupApologyLetter();
+      setupAngryGame();
+      setupForgiveMeter();
+      setupHeartPuzzle();
+      setupApologyEnding();
+    }
+  }
+
+  function setupApologyDialogue() {
+    const dialogueText = document.getElementById("apology-dialogue-text");
+    const nextBtn = document.getElementById("apology-next-dialogue-btn");
+    const dialogueCard = document.getElementById("apology-dialogue-card");
+    const letterContainer = document.getElementById("apology-letter-container");
+
+    const lines = getConfigValue(["apology", "openingDialogue"], [
+      "Ummm... I may have done something stupid 🥲",
+      "And apparently someone deserves an apology...",
+      "Who? 👀",
+      "You. Obviously 😭❤️",
+      "Okay okay... serious mode now."
+    ]);
+
+    if (!nextBtn || !dialogueText) return;
+
+    if (state.apology.dialogueListenersBound) return;
+    state.apology.dialogueListenersBound = true;
+
+    dialogueText.innerText = lines[0];
+
+    nextBtn.addEventListener("click", () => {
+      state.apology.dialogueIndex++;
+      playTickSound();
+
+      if (state.apology.dialogueIndex < lines.length) {
+        dialogueText.innerText = lines[state.apology.dialogueIndex];
+      } else {
+        // Transition to Apology Letter
+        dialogueCard?.classList.add("hidden");
+        letterContainer?.classList.remove("hidden");
+      }
+    });
+  }
+
+  function setupApologyLetter() {
+    const openBtn = document.getElementById("open-apology-letter-btn");
+    const bodyEl = document.getElementById("apology-typed-body");
+    const angrySection = document.getElementById("apology-angry-section");
+
+    if (state.apology.letterListenersBound) return;
+    state.apology.letterListenersBound = true;
+
+    openBtn?.addEventListener("click", () => {
+      openBtn.classList.add("hidden");
+      bodyEl?.classList.remove("hidden");
+      
+      const fullText = getConfigValue(["apology", "typedMessage"], "");
+      bodyEl.innerHTML = fullText;
+      playTickSound();
+
+      // Reveal Angry Game section after brief delay
+      setTimeout(() => {
+        angrySection?.classList.remove("hidden");
+        angrySection?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }, 800);
+    });
+  }
+
+  function setupAngryGame() {
+    const yesBtn = document.getElementById("angry-btn-yes");
+    const maybeBtn = document.getElementById("angry-btn-maybe");
+    const dodgeToast = document.getElementById("angry-dodge-toast");
+    const responseMsg = document.getElementById("angry-response-msg");
+    const meterSection = document.getElementById("apology-meter-section");
+
+    if (state.apology.angryListenersBound) return;
+    state.apology.angryListenersBound = true;
+
+    const messages = getConfigValue(["apology", "angryGame", "dodgingMessages"], [
+      "WAIT 😭",
+      "Let's discuss this peacefully.",
+      "I brought virtual chocolate 🍫",
+      "Look... a puppy 🐶",
+      "Okay fine, you win 😭❤️"
+    ]);
+
+    const dodgeButton = () => {
+      if (state.apology.angryAttempts < 5) {
+        state.apology.angryAttempts++;
+        playTickSound();
+
+        if (dodgeToast) {
+          dodgeToast.classList.remove("hidden");
+          const msgIdx = Math.min(state.apology.angryAttempts - 1, messages.length - 1);
+          dodgeToast.innerText = messages[msgIdx];
+        }
+
+        const randomX = (Math.random() * 100 - 50);
+        const randomY = (Math.random() * 30 - 15);
+        yesBtn.style.transform = `translate(${randomX}px, ${randomY}px)`;
+      } else {
+        yesBtn.style.transform = "translate(0, 0)";
+      }
+    };
+
+    yesBtn?.addEventListener("mouseenter", dodgeButton);
+    yesBtn?.addEventListener("touchstart", dodgeButton, { passive: true });
+
+    yesBtn?.addEventListener("click", () => {
+      playTickSound();
+      if (responseMsg) {
+        responseMsg.classList.remove("hidden");
+        responseMsg.innerText = getConfigValue(["apology", "angryGame", "responseYes"], "Understandable 😭 I'll keep trying.");
+      }
+      setTimeout(() => {
+        meterSection?.classList.remove("hidden");
+        meterSection?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }, 500);
+    });
+
+    maybeBtn?.addEventListener("click", () => {
+      playTickSound();
+      if (responseMsg) {
+        responseMsg.classList.remove("hidden");
+        responseMsg.innerText = getConfigValue(["apology", "angryGame", "responseMaybe"], "PROGRESS 😭❤️");
+      }
+      setTimeout(() => {
+        meterSection?.classList.remove("hidden");
+        meterSection?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+      }, 500);
+    });
+  }
+
+  function setupForgiveMeter() {
+    const grid = document.getElementById("forgive-bribe-grid");
+    const bar = document.getElementById("forgive-progress-bar");
+    const text = document.getElementById("forgive-percentage-text");
+    const certCard = document.getElementById("forgive-certificate-card");
+    const puzzleSection = document.getElementById("apology-puzzle-section");
+    const certDateText = document.getElementById("cert-date-text");
+    const certUser = document.getElementById("cert-user-name");
+    const certAuthor = document.getElementById("cert-author-name");
+
+    if (!grid) return;
+
+    const items = getConfigValue(["apology", "forgiveMeter", "items"], []);
+    const userName = getConfigValue(["apology", "userName"], "Amuu");
+    const authorName = getConfigValue(["apology", "authorName"], "Rakesh");
+
+    if (certUser) certUser.innerText = userName;
+    if (certAuthor) certAuthor.innerText = authorName;
+    if (certDateText) certDateText.innerText = new Date().toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' });
+
+    grid.innerHTML = "";
+
+    items.forEach(item => {
+      const btn = document.createElement("button");
+      btn.className = "px-3 py-2 bg-white/80 hover:bg-pink-100 border border-pink-200 text-purple-950 rounded-xl text-xs font-bold shadow-sm transition active:scale-95 text-left flex justify-between items-center cursor-pointer";
+      btn.innerHTML = `
+        <span>${item.label}</span>
+        <span class="text-[10px] text-pink-600 font-bold">+${item.val}%</span>
+      `;
+
+      btn.addEventListener("click", () => {
+        state.apology.forgivenessPercentage = Math.min(100, state.apology.forgivenessPercentage + item.val);
+        
+        if (bar) bar.style.width = `${state.apology.forgivenessPercentage}%`;
+        if (text) text.innerText = `${state.apology.forgivenessPercentage}% Forgiven ${state.apology.forgivenessPercentage === 100 ? '🎉' : '🥲'}`;
+
+        playTickSound();
+
+        if (state.apology.forgivenessPercentage >= 100) {
+          triggerConfetti();
+          certCard?.classList.remove("hidden");
+          state.achievements.is100Forgiven = true;
+          
+          const statusText = document.getElementById("relationship-status-text");
+          if (statusText) statusText.innerText = "💚 Everything is okay again";
+
+          setTimeout(() => {
+            puzzleSection?.classList.remove("hidden");
+            puzzleSection?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          }, 800);
+        }
+      });
+
+      grid.appendChild(btn);
+    });
+  }
+
+  function setupHeartPuzzle() {
+    const board = document.getElementById("heart-puzzle-board");
+    const status = document.getElementById("heart-puzzle-status");
+    const endingSection = document.getElementById("apology-ending-section");
+
+    if (!board) return;
+
+    const renderPuzzleBoard = () => {
+      board.innerHTML = "";
+      const piecesMap = {
+        1: { icon: "💔", label: "Top-Left" },
+        2: { icon: "🧩", label: "Top-Right" },
+        3: { icon: "❤️", label: "Bottom-Left" },
+        4: { icon: "✨", label: "Bottom-Right" }
+      };
+
+      state.apology.puzzlePieces.forEach((val, idx) => {
+        const btn = document.createElement("button");
+        const isSelected = state.apology.selectedPieceIdx === idx;
+        btn.className = `heart-puzzle-piece p-3.5 bg-white rounded-xl border border-pink-200 shadow text-xl flex flex-col items-center justify-center cursor-pointer ${isSelected ? 'selected' : ''}`;
+        btn.innerHTML = `<span>${piecesMap[val].icon}</span><span class="text-[9px] text-gray-400 font-bold mt-1">#${val}</span>`;
+
+        btn.addEventListener("click", () => {
+          playTickSound();
+          if (state.apology.selectedPieceIdx === null) {
+            state.apology.selectedPieceIdx = idx;
+            renderPuzzleBoard();
+          } else {
+            const prevIdx = state.apology.selectedPieceIdx;
+            const temp = state.apology.puzzlePieces[prevIdx];
+            state.apology.puzzlePieces[prevIdx] = state.apology.puzzlePieces[idx];
+            state.apology.puzzlePieces[idx] = temp;
+
+            state.apology.selectedPieceIdx = null;
+            renderPuzzleBoard();
+
+            const isSolved = state.apology.puzzlePieces.every((v, i) => v === i + 1);
+            if (isSolved) {
+              state.apology.puzzleSolved = true;
+              status?.classList.remove("hidden");
+              triggerConfetti();
+              setTimeout(() => {
+                endingSection?.classList.remove("hidden");
+                endingSection?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+              }, 800);
+            }
+          }
+        });
+
+        board.appendChild(btn);
+      });
+    };
+
+    if (!state.apology.puzzleSolved) {
+      state.apology.puzzlePieces = [3, 1, 4, 2];
+    }
+    renderPuzzleBoard();
+  }
+
+  function setupApologyEnding() {
+    const btn = document.getElementById("apology-final-accept-btn");
+    const badge = document.getElementById("apology-mission-badge");
+
+    if (state.apology.endingListenersBound) return;
+    state.apology.endingListenersBound = true;
+
+    btn?.addEventListener("click", () => {
+      btn.classList.add("hidden");
+      badge?.classList.remove("hidden");
+      triggerConfetti();
+      triggerConfetti();
+      playTickSound();
+
+      state.achievements.apologyDelivered = true;
+      checkFinalSurpriseUnlock();
+    });
+  }
+
+  /* =================================================================
+     💗 MISSING YOU DASHBOARD LOGIC 💗
+     ================================================================= */
+
+  function initMissingDashboard() {
+    const lockPrompt = document.getElementById("missing-lock-prompt");
+    const identityScreen = document.getElementById("missing-identity-screen");
+    const activeContainer = document.getElementById("missing-active-container");
+
+    if (!lockPrompt || !identityScreen || !activeContainer) return;
+
+    if (!state.secretRoomUnlocked) {
+      lockPrompt.classList.remove("hidden");
+      identityScreen.classList.add("hidden");
+      activeContainer.classList.add("hidden");
+      return;
+    }
+
+    lockPrompt.classList.add("hidden");
+
+    if (!state.chat.currentUser) {
+      identityScreen.classList.remove("hidden");
+      activeContainer.classList.add("hidden");
+      setupGlobalIdentityListeners();
+    } else {
+      identityScreen.classList.add("hidden");
+      activeContainer.classList.remove("hidden");
+
+      const userLabel = document.getElementById("missing-user-label");
+      if (userLabel) {
+        const isAmuu = state.chat.currentUser === "Amuu";
+        userLabel.innerText = `Viewing as: ${state.chat.currentUser} ${isAmuu ? '🌸' : '☕'}`;
+      }
+
+      setupGlobalIdentityListeners();
+      state.achievements.missingVisited = true;
+
+      renderMissingCountersUI();
+      startLastConversationTimer();
+      setupWhyIMissYouGenerator();
+      setupMissingPlusOneBtn();
+      updateMissingLevelGauge();
+      checkFinalSurpriseUnlock();
+    }
+  }
+
+  function renderMissingCountersUI() {
+    const counterEl = document.getElementById("missing-main-counter");
+    const amuuEl = document.getElementById("amuu-missed-count");
+    const rakeshEl = document.getElementById("rakesh-missed-count");
+
+    if (!state.missing.count) {
+      state.missing.count = parseInt(localStorage.getItem("romantic_real_missing_count") || "12847", 10);
+    }
+    if (!state.missing.amuuCount) {
+      state.missing.amuuCount = parseInt(localStorage.getItem("romantic_missing_count_Amuu") || "6423", 10);
+    }
+    if (!state.missing.rakeshCount) {
+      state.missing.rakeshCount = parseInt(localStorage.getItem("romantic_missing_count_Rakesh") || "6424", 10);
+    }
+
+    if (counterEl) counterEl.innerText = state.missing.count.toLocaleString();
+    if (amuuEl) amuuEl.innerText = state.missing.amuuCount.toLocaleString();
+    if (rakeshEl) rakeshEl.innerText = state.missing.rakeshCount.toLocaleString();
+  }
+
+  function updateMissingLevelGauge() {
+    const levels = getConfigValue(["missingDashboard", "levels"], []);
+    const fill = document.getElementById("missing-level-fill");
+    const badge = document.getElementById("missing-level-badge");
+
+    if (!fill || !badge || levels.length === 0) return;
+
+    let levelIdx = 2;
+    if (state.missing.count > 14000) levelIdx = 4;
+    else if (state.missing.count > 13000) levelIdx = 3;
+    else if (state.missing.count > 12000) levelIdx = 2;
+    else if (state.missing.count > 10000) levelIdx = 1;
+    else levelIdx = 0;
+
+    const currentLevel = levels[levelIdx];
+    badge.innerText = currentLevel.text;
+    badge.className = `text-xs px-3 py-1 rounded-full font-bold ${currentLevel.bg} ${currentLevel.color}`;
+
+    const fillPct = Math.min(100, Math.max(20, (levelIdx + 1) * 20));
+    fill.style.width = `${fillPct}%`;
+  }
+
+  function startLastConversationTimer() {
+    const timerEl = document.getElementById("last-convo-timer");
+    if (!timerEl) return;
+
+    const dateStr = getConfigValue(["missingDashboard", "lastConversationDate"], "2026-09-04T20:00:00");
+    const lastDate = new Date(dateStr).getTime();
+
+    const updateTimer = () => {
+      const now = Date.now();
+      const diff = Math.max(0, now - lastDate);
+
+      const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+      const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+      const minutes = Math.floor((diff / (1000 * 60)) % 60);
+      const seconds = Math.floor((diff / 1000) % 60);
+
+      const pad = (n) => String(n).padStart(2, '0');
+      timerEl.innerText = `${pad(days)}d ${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s`;
+    };
+
+    updateTimer();
+    if (!state.missing.lastConvoInterval) {
+      state.missing.lastConvoInterval = setInterval(updateTimer, 1000);
+    }
+  }
+
+  function setupWhyIMissYouGenerator() {
+    const btn = document.getElementById("generate-reason-btn");
+    const box = document.getElementById("missing-reason-box");
+
+    if (state.missing.reasonListenersBound) return;
+    state.missing.reasonListenersBound = true;
+
+    const reasons = getConfigValue(["missingDashboard", "reasons"], []);
+
+    btn?.addEventListener("click", () => {
+      playTickSound();
+
+      if (state.missing.usedReasons.length >= reasons.length) {
+        state.missing.usedReasons = [];
+      }
+
+      const available = reasons.filter((_, idx) => !state.missing.usedReasons.includes(idx));
+      const randomIdx = Math.floor(Math.random() * available.length);
+      const actualIdx = reasons.indexOf(available[randomIdx]);
+
+      state.missing.usedReasons.push(actualIdx);
+
+      if (box) {
+        box.innerHTML = `<p class="animate-fade-in">"${reasons[actualIdx]}"</p>`;
+      }
+    });
+  }
+
+  function setupMissingPlusOneBtn() {
+    const btn = document.getElementById("missing-plus-one-btn");
+    const feedback = document.getElementById("missing-btn-feedback");
+
+    if (state.missing.plusOneBound) return;
+    state.missing.plusOneBound = true;
+
+    const messages = getConfigValue(["missingDashboard", "buttonMessages"], [
+      "Counter updated 😂",
+      "As if it wasn't high enough.",
+      "Okay this is becoming embarrassing.",
+      "Please stop exposing me 😭"
+    ]);
+
+    let clickCount = 0;
+
+    btn?.addEventListener("click", (e) => {
+      state.missing.count++;
+      if (state.chat.currentUser === "Amuu") {
+        state.missing.amuuCount = (state.missing.amuuCount || 0) + 1;
+        localStorage.setItem("romantic_missing_count_Amuu", state.missing.amuuCount);
+      } else if (state.chat.currentUser === "Rakesh") {
+        state.missing.rakeshCount = (state.missing.rakeshCount || 0) + 1;
+        localStorage.setItem("romantic_missing_count_Rakesh", state.missing.rakeshCount);
+      }
+      localStorage.setItem("romantic_real_missing_count", state.missing.count);
+
+      renderMissingCountersUI();
+      updateMissingLevelGauge();
+      playTickSound();
+
+      clickCount++;
+
+      const particle = document.createElement("span");
+      particle.innerText = "💗";
+      particle.className = "floating-heart-particle text-xl";
+      particle.style.left = `${e.offsetX}px`;
+      particle.style.top = `${e.offsetY}px`;
+      btn.appendChild(particle);
+
+      setTimeout(() => particle.remove(), 1200);
+
+      if (feedback) {
+        const msg = messages[(clickCount - 1) % messages.length];
+        feedback.innerText = msg;
+      }
+
+      // Real-time broadcast via ntfy.sh
+      const topic = getConfigValue(["chat", "topic"], "amuu_rakesh_love_chat_2026_xyz");
+      const payload = {
+        type: "missing_click",
+        id: "missing_" + Math.random().toString(36).substr(2, 9),
+        sender: state.chat.currentUser || "Someone",
+        totalCount: state.missing.count,
+        amuuCount: state.missing.amuuCount,
+        rakeshCount: state.missing.rakeshCount,
+        time: Date.now()
+      };
+
+      fetch(`https://ntfy.sh/${topic}`, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      }).catch(err => console.error("Error posting missing click:", err));
+    });
+  }
+
+  /* =================================================================
+     🔔 ROMANTIC STORY NOTIFICATION ENGINE 🔔
+     ================================================================= */
+
+  function initStoryNotificationEngine() {
+    const config = getConfigValue(["romanticNotifications"], {});
+    if (!config.enabled) return;
+
+    if (state.notifications.storyTimer) return;
+
+    const intervalMs = (config.intervalSeconds || 35) * 1000;
+
+    state.notifications.storyTimer = setInterval(() => {
+      if (state.currentPage === "landing") return;
+
+      const prompts = config.prompts || [];
+      if (prompts.length === 0) return;
+
+      const prompt = prompts[state.notifications.lastPromptIndex % prompts.length];
+      state.notifications.lastPromptIndex++;
+
+      showChatPopupNotification({
+        sender: prompt.icon || "✨",
+        text: prompt.text,
+        type: "story",
+        target: prompt.target
+      });
+    }, intervalMs);
+  }
+
+  /* =================================================================
+     ✨ HIDDEN FINAL SURPRISE ENGINE ✨
+     ================================================================= */
+
+  function checkFinalSurpriseUnlock() {
+    const { apologyDelivered, is100Forgiven, missingVisited } = state.achievements;
+    const gamePlayed = state.games.completed.size > 0;
+
+    if (apologyDelivered && is100Forgiven && missingVisited && gamePlayed && !state.achievements.finalUnlocked) {
+      state.achievements.finalUnlocked = true;
+
+      setTimeout(() => {
+        showChatPopupNotification({
+          sender: "✨ Special Achievement",
+          text: getConfigValue(["finalSurprise", "unlockPrompt"], "✨ You've unlocked something special..."),
+          type: "story",
+          target: "final_surprise"
+        });
+      }, 1000);
+    }
+  }
+
+  function openFinalSurpriseModal() {
+    const modal = document.getElementById("final-surprise-modal");
+    const textBody = document.getElementById("final-surprise-text-body");
+    const closeBtn = document.getElementById("close-final-surprise-btn");
+    const okBtn = document.getElementById("final-surprise-ok-btn");
+
+    if (!modal || !textBody) return;
+
+    modal.classList.remove("hidden");
+    modal.classList.add("flex");
+    triggerConfetti();
+
+    const lines = getConfigValue(["finalSurprise", "textLines"], []);
+    textBody.innerHTML = "";
+
+    lines.forEach((line, idx) => {
+      const p = document.createElement("p");
+      p.className = `transition-all duration-700 opacity-0 transform translate-y-2 ${idx === lines.length - 1 ? 'font-bold text-pink-600 text-base md:text-lg not-italic mt-3 animate-pulse' : ''}`;
+      p.innerText = line;
+      textBody.appendChild(p);
+
+      setTimeout(() => {
+        p.classList.remove("opacity-0", "translate-y-2");
+        p.classList.add("opacity-100", "translate-y-0");
+        playTickSound();
+      }, idx * 700);
+    });
+
+    const closeModal = () => {
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    };
+
+    if (closeBtn) closeBtn.onclick = closeModal;
+    if (okBtn) okBtn.onclick = closeModal;
+  }
+
+  // Initialize notification popup listeners and story notification engine
+  setupNotificationPopupListeners();
+  initStoryNotificationEngine();
+
+  // If user is already identified, start background real-time listener right away
+  if (state.chat.currentUser) {
+    connectRealTimeChat();
+  }
+
+  /* =================================================================
      💕 OUTRO / RESTART 💕
      ================================================================= */
   
@@ -2279,3 +3423,4 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
 });
+

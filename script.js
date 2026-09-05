@@ -2106,10 +2106,10 @@ document.addEventListener("DOMContentLoaded", () => {
       try {
         state.chat.complaints = JSON.parse(savedComplaints);
       } catch(e) {
-        state.chat.complaints = getConfigValue(["chat", "sampleComplaints"], []);
+        state.chat.complaints = [];
       }
     } else {
-      state.chat.complaints = getConfigValue(["chat", "sampleComplaints"], []);
+      state.chat.complaints = [];
       localStorage.setItem("romantic_complaints_history", JSON.stringify(state.chat.complaints));
     }
     renderComplaintsList();
@@ -2529,10 +2529,14 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     clearBtn?.addEventListener("click", () => {
-      if (confirm("Are you sure you want to clear your local chat history? 🗑️")) {
+      if (confirm("Are you sure you want to clear your local chat & complaints history? 🗑️")) {
         state.chat.messages = [];
+        state.chat.complaints = [];
         localStorage.removeItem("romantic_chat_history");
+        localStorage.removeItem("romantic_complaints_history");
         renderChatMessages();
+        renderComplaintsList();
+        updateNavBadges();
         playTickSound();
       }
     });

@@ -297,24 +297,7 @@ Thank you for being such an inspiration. Keep shining! 🌟`
       { id: "annoyed", label: "Mild Annoyance 😤", bg: "bg-rose-100 text-rose-800 border-rose-200" },
       { id: "sweet", label: "Sweet Complaint 🥺", bg: "bg-pink-100 text-pink-800 border-pink-200" }
     ],
-    sampleComplaints: [
-      {
-        id: "c_sample_1",
-        sender: "Amuu",
-        text: "You take way too long to reply when you say 'BRB 2 minutes'! ⏱️",
-        category: "annoyed",
-        time: Date.now() - 86400000,
-        resolved: false
-      },
-      {
-        id: "c_sample_2",
-        sender: "Rakesh",
-        text: "You send 10 messages in a row instead of one single paragraph! 😂",
-        category: "silly",
-        time: Date.now() - 43200000,
-        resolved: true
-      }
-    ]
+    sampleComplaints: []
   },
 
   // 🥺 Cute Apology Page Settings

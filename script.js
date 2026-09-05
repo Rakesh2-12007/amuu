@@ -377,6 +377,8 @@ document.addEventListener("DOMContentLoaded", () => {
         resetQuiz();
       } else if (sectionId === "surprise") {
         resetSurprise();
+      } else if (sectionId === "midnight") {
+        initMidnightCorner();
       }
 
       // Always unlock body scroll when changing sections
@@ -1596,6 +1598,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const space = document.getElementById("midnight-starfield");
     if (!space) return;
 
+    // Update title & subtitle dynamically if configured
+    const titleEl = document.getElementById("midnight-title");
+    const subtitleEl = document.getElementById("midnight-subtitle");
+    const titleConf = getConfigValue(["midnightCorner", "title"], null);
+    const subConf = getConfigValue(["midnightCorner", "subtitle"], null);
+    if (titleEl && titleConf) titleEl.innerText = titleConf;
+    if (subtitleEl && subConf) subtitleEl.innerText = subConf;
+
     // Remove existing
     space.querySelectorAll(".star").forEach(s => s.remove());
 
@@ -1655,7 +1665,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Star Click Easter Egg setup
     const moon = document.getElementById("midnight-moon");
-    if (moon) {
+    if (moon && !moon.dataset.listenerAdded) {
+      moon.dataset.listenerAdded = "true";
       moon.addEventListener("click", () => {
         state.easterEggs.starClicks++;
         playTickSound();
